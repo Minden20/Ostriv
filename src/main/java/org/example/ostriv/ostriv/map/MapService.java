@@ -23,18 +23,30 @@ public class MapService {
             throw new IllegalArgumentException("Відсутній об'єкт 'map'");
         }
 
-        int width = ((Long) mapData.get("width")).intValue();
-        int height = ((Long) mapData.get("height")).intValue();
+        // keys in the JSON may be capitalized; try both variants
+        Object widthObj = mapData.get("width");
+        if (widthObj == null) widthObj = mapData.get("Width");
+        Object heightObj = mapData.get("height");
+        if (heightObj == null) heightObj = mapData.get("Height");
+
+        int width = ((Long) widthObj).intValue();
+        int height = ((Long) heightObj).intValue();
 
         Object tilesObj = mapData.get("tiles");
+        if (tilesObj == null) tilesObj = mapData.get("Tiles");
         List<Tile> tiles = new ArrayList<>();
 
         if (tilesObj instanceof List<?> tileList) {
             for (Object item : tileList) {
                 if (item instanceof JsonObject tileJson) {
-                    int x = ((Long) tileJson.get("x")).intValue();
-                    int y = ((Long) tileJson.get("y")).intValue();
+                    Object xObj = tileJson.get("x");
+                    if (xObj == null) xObj = tileJson.get("X");
+                    Object yObj = tileJson.get("y");
+                    if (yObj == null) yObj = tileJson.get("Y");
                     String type = (String) tileJson.get("type");
+                    if (type == null) type = (String) tileJson.get("Type");
+                    int x = ((Long) xObj).intValue();
+                    int y = ((Long) yObj).intValue();
                     tiles.add(new Tile(x, y, type));
                 }
             }

@@ -1,20 +1,16 @@
-package org.example.ostriv.ostriv.player;
+package org.example.ostriv.ostriv.mobs;
 
-public class Player {
+public class Unit {
     private String name;
-    private int health;
-    private int inventory;
+    private int healthpoints;
     private int lvl;
-    private int exp;
     private int damage;
     private int x;
     private int y;
 
-    public Player(int damage, int exp, int health, int inventory, int lvl, String name, int x, int y) {
+    public Unit(int damage, int exp, int healthpoints, int inventory, int lvl, int lvl2, String name, int x, int y) {
         this.damage = damage;
-        this.exp = exp;
-        this.health = health;
-        this.inventory = inventory;
+        this.healthpoints = healthpoints;
         this.lvl = lvl;
         this.name = name;
         this.x = x;
@@ -29,20 +25,12 @@ public class Player {
         this.name = name;
     }
 
-    public int getHealth() {
-        return health;
+    public int getHealthpoints() {
+        return healthpoints;
     }
 
-    public void setHealth(int health) {
-        this.health = health;
-    }
-
-    public int getInventory() {
-        return inventory;
-    }
-
-    public void setInventory(int inventory) {
-        this.inventory = inventory;
+    public void setHealthpoints(int healthpoints) {
+        this.healthpoints = healthpoints;
     }
 
     public int getLvl() {
@@ -51,14 +39,6 @@ public class Player {
 
     public void setLvl(int lvl) {
         this.lvl = lvl;
-    }
-
-    public int getExp() {
-        return exp;
-    }
-
-    public void setExp(int exp) {
-        this.exp = exp;
     }
 
     public int getDamage() {
@@ -84,5 +64,4 @@ public class Player {
     public void setY(int y) {
         this.y = y;
     }
-    
 }

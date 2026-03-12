@@ -3,14 +3,15 @@ package org.example.ostriv.ostriv;
 import org.example.ostriv.ostriv.map.MapDAO;
 import org.example.ostriv.ostriv.map.MapModel;
 import org.example.ostriv.ostriv.map.MapRenderer;
-import org.example.ostriv.ostriv.player.Player;
+import org.example.ostriv.ostriv.mobs.Player;
 
 import javafx.fxml.FXML;
+import javafx.scene.canvas.Canvas; // ДОДАНО ІМПОРТ CANVAS
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+// імпорт GridPane більше не потрібен
 
 public class HelloController {
 
@@ -26,20 +27,31 @@ public class HelloController {
     private Player player;
     private MapRenderer renderer;
     private MapModel mapModel;
+    
+    // ЗАМІНИЛИ GridPane на Canvas
+    private Canvas mapCanvas; 
 
     @FXML
+    @SuppressWarnings("CallToPrintStackTrace")
     protected void onLoadMapClick() {
         MapDAO mapDAO = new MapDAO();
         renderer = new MapRenderer();
         try {
             mapModel = mapDAO.loadMap();
-            mapGrid = renderer.render(mapModel);
 
-            // Створюємо гравця на позиції (0, 0)
-            player = new Player(10, 0, 100, 0, 1, "Hero", 0, 0);
-            renderer.renderPlayer(player);
+            // 1. Створюємо полотно Canvas замість GridPane
+            mapCanvas = renderer.createMapCanvas(mapModel);
 
-            mapContainer.getChildren().add(mapGrid);
+            // 2. Створюємо гравця
+            player = new Player(10, 0, 100, 0, 100, 1, "Hero", 10, 10); // damage, exp, hp, inventory, energy, lvl, name, x, y
+
+            // 3. Малюємо всю карту та гравця на Canvas
+            renderer.renderAll(mapModel, player);
+
+            // 4. Очищаємо контейнер (на випадок повторного завантаження) і додаємо Canvas
+            mapContainer.getChildren().clear();
+            mapContainer.getChildren().add(mapCanvas);
+
             welcomeText.setText("Карту завантажено: " + mapModel.getWidth() + "x" + mapModel.getHeight()
                     + " | Гравець: (" + player.getX() + ", " + player.getY() + ")");
 
@@ -54,17 +66,18 @@ public class HelloController {
         }
     }
 
-    private GridPane mapGrid;
-
     private void cameraFollowPlayer() {
+        if (mapCanvas == null) return; // Захист від NullPointerException
+
         double playerPixelX = player.getX() * 50; // 50 = TILE_SIZE
         double playerPixelY = player.getY() * 50;
 
         double viewWidth = mapContainer.getWidth();
         double viewHeight = mapContainer.getHeight();
 
-        mapGrid.setTranslateX(-(playerPixelX - viewWidth / 2));
-        mapGrid.setTranslateY(-(playerPixelY - viewHeight / 2));
+        // Тепер рухаємо Canvas, а не GridPane
+        mapCanvas.setTranslateX(-(playerPixelX - viewWidth / 2));
+        mapCanvas.setTranslateY(-(playerPixelY - viewHeight / 2));
     }
 
     private void handleKeyPress(KeyEvent event) {
@@ -88,9 +101,16 @@ public class HelloController {
         if (newX >= 0 && newX < mapModel.getWidth() && newY >= 0 && newY < mapModel.getHeight()) {
             player.setX(newX);
             player.setY(newY);
-            renderer.updatePlayerPosition(player);
+            
+            // ЗАМІСТЬ видалення/додавання елементів - просто перемальовуємо весь Canvas
+            renderer.renderAll(mapModel, player);
+            
             cameraFollowPlayer();
             welcomeText.setText("Гравець: (" + player.getX() + ", " + player.getY() + ")");
         }
+    }
+
+    public Button getLoadButton() {
+        return loadButton;
     }
 }
