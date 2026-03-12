@@ -29,4 +29,13 @@ public class MapModel {
     public String toString() {
         return "MapModel{width=" + width + ", height=" + height + ", tiles=" + tiles.size() + "}";
     }
+
+    public Tile getTileAt(int newX, int newY) {
+        for (Tile tile : tiles) {
+            if (tile.getX() == newX && tile.getY() == newY) {
+                return tile;
+            }
+        }
+        return null; // Якщо тайл не знайдено, можна повернути null або кинути виключення
+    }
 }

@@ -3,7 +3,7 @@ package org.example.ostriv.ostriv.map;
 import org.example.ostriv.ostriv.utill.JsonFileHandler;
 
 public class MapDAO {
-    private static final String FILE_PATH = "src/main/java/org/example/ostriv/ostriv/map/map.json";
+    private static final String FILE_PATH = "src/main/java/org/example/ostriv/ostriv/map/map_seed_1601.json";
 
     private final JsonFileHandler jsonFileHandler;
     private final MapService mapService;

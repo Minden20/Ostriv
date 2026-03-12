@@ -6,12 +6,11 @@ import org.example.ostriv.ostriv.map.MapRenderer;
 import org.example.ostriv.ostriv.mobs.Player;
 
 import javafx.fxml.FXML;
-import javafx.scene.canvas.Canvas; // ДОДАНО ІМПОРТ CANVAS
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
-// імпорт GridPane більше не потрібен
 
 public class HelloController {
 
@@ -24,12 +23,15 @@ public class HelloController {
     @FXML
     private Button loadButton;
 
+    @FXML
+    private Label coordsLabel;
+
     private Player player;
     private MapRenderer renderer;
     private MapModel mapModel;
-    
+
     // ЗАМІНИЛИ GridPane на Canvas
-    private Canvas mapCanvas; 
+    private Canvas mapCanvas;
 
     @FXML
     @SuppressWarnings("CallToPrintStackTrace")
@@ -43,7 +45,8 @@ public class HelloController {
             mapCanvas = renderer.createMapCanvas(mapModel);
 
             // 2. Створюємо гравця
-            player = new Player(10, 0, 100, 0, 100, 1, "Hero", 10, 10); // damage, exp, hp, inventory, energy, lvl, name, x, y
+            player = new Player(10, 0, 100, 0, 100, 1, "Hero", 20, 38); // damage, exp, hp, inventory, energy, lvl,
+                                                                        // name, x, y
 
             // 3. Малюємо всю карту та гравця на Canvas
             renderer.renderAll(mapModel, player);
@@ -52,8 +55,8 @@ public class HelloController {
             mapContainer.getChildren().clear();
             mapContainer.getChildren().add(mapCanvas);
 
-            welcomeText.setText("Карту завантажено: " + mapModel.getWidth() + "x" + mapModel.getHeight()
-                    + " | Гравець: (" + player.getX() + ", " + player.getY() + ")");
+            welcomeText.setText("Карту завантажено: " + mapModel.getWidth() + "x" + mapModel.getHeight());
+            updateCoordsLabel();
 
             // Фокус на контейнер для обробки клавіш
             mapContainer.setFocusTraversable(true);
@@ -67,7 +70,8 @@ public class HelloController {
     }
 
     private void cameraFollowPlayer() {
-        if (mapCanvas == null) return; // Захист від NullPointerException
+        if (mapCanvas == null)
+            return; // Захист від NullPointerException
 
         double playerPixelX = player.getX() * 50; // 50 = TILE_SIZE
         double playerPixelY = player.getY() * 50;
@@ -101,12 +105,21 @@ public class HelloController {
         if (newX >= 0 && newX < mapModel.getWidth() && newY >= 0 && newY < mapModel.getHeight()) {
             player.setX(newX);
             player.setY(newY);
-            
-            // ЗАМІСТЬ видалення/додавання елементів - просто перемальовуємо весь Canvas
+
             renderer.renderAll(mapModel, player);
-            
+
             cameraFollowPlayer();
-            welcomeText.setText("Гравець: (" + player.getX() + ", " + player.getY() + ")");
+            updateCoordsLabel();
+        }
+        if (mapModel.getTileAt(newX, newY).getType().equals("Water")) {
+            
+        } else {
+        }
+    }
+
+    private void updateCoordsLabel() {
+        if (coordsLabel != null && player != null) {
+            coordsLabel.setText("X: " + player.getX() + "  Y: " + player.getY());
         }
     }
 

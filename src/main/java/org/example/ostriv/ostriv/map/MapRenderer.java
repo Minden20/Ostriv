@@ -77,10 +77,10 @@ public class MapRenderer {
 
     private Color getTileColor(String type) {
         return switch (type) {
-            case "grass" -> Color.web("#4CAF50");
-            case "water" -> Color.web("#2196F3");
-            case "sand" -> Color.web("#FFC107");
-            case "mountain" -> Color.web("#795548");
+            case "Forest" -> Color.web("#4CAF50");
+            case "Water" -> Color.web("#2196F3");
+            case "Sand" -> Color.web("#FFC107");
+            case "Mountain" -> Color.web("#795548");
             default -> Color.LIGHTGRAY;
         };
     }
