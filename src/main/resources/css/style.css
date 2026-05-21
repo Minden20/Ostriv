@@ -1,0 +1,235 @@
+.root-pane {
+    -fx-background-color: #1e1e2e;
+}
+
+.main-pane {
+    -fx-background-color: #1e1e2e;
+}
+
+/* --- Typography & Basics --- */
+.title-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #cdd6f4;
+}
+
+.section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #cdd6f4;
+}
+
+Label {
+    -fx-text-fill: #a6adc8;
+    -fx-font-size: 14px;
+}
+
+/* --- Login Box --- */
+.login-box {
+    -fx-background-color: #313244;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);
+}
+
+.input-field {
+    -fx-background-color: #1e1e2e;
+    -fx-text-fill: #cdd6f4;
+    -fx-prompt-text-fill: #585b70;
+    -fx-border-color: #45475a;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 12px;
+    -fx-font-size: 14px;
+}
+
+.input-field:focused {
+    -fx-border-color: #89b4fa;
+}
+
+/* --- Buttons --- */
+.primary-button {
+    -fx-background-color: #89b4fa;
+    -fx-text-fill: #1e1e2e;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 10px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #b4befe;
+}
+
+.primary-button:pressed {
+    -fx-background-color: #74c7ec;
+}
+
+.action-button {
+    -fx-background-color: #a6e3a1;
+    -fx-text-fill: #1e1e2e;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 15px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.action-button:hover {
+    -fx-background-color: #94e2d5;
+}
+
+.link-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #89b4fa;
+    -fx-underline: true;
+    -fx-cursor: hand;
+}
+
+.link-button:hover {
+    -fx-text-fill: #b4befe;
+}
+
+.logout-button {
+    -fx-background-color: #f38ba8;
+    -fx-text-fill: #1e1e2e;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.logout-button:hover {
+    -fx-background-color: #eba0ac;
+}
+
+/* --- Errors --- */
+.error-label {
+    -fx-text-fill: #f38ba8;
+    -fx-font-weight: bold;
+}
+
+/* --- Header & Sidebar --- */
+.header {
+    -fx-background-color: #11111b;
+    -fx-border-color: #313244;
+    -fx-border-width: 0 0 1 0;
+}
+
+.header-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #89b4fa;
+}
+
+.header-user {
+    -fx-font-weight: bold;
+    -fx-text-fill: #a6e3a1;
+}
+
+.sidebar {
+    -fx-background-color: #181825;
+    -fx-border-color: #313244;
+    -fx-border-width: 0 1 0 0;
+    -fx-pref-width: 200px;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #a6adc8;
+    -fx-font-size: 16px;
+    -fx-alignment: center-left;
+    -fx-padding: 10px 15px;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #313244;
+    -fx-text-fill: #cdd6f4;
+}
+
+.nav-button-active {
+    -fx-background-color: #313244;
+    -fx-text-fill: #89b4fa;
+    -fx-border-color: #89b4fa;
+    -fx-border-width: 0 0 0 4;
+}
+
+/* --- TableView --- */
+.data-table {
+    -fx-background-color: #1e1e2e;
+    -fx-border-color: #313244;
+    -fx-border-radius: 5px;
+}
+
+.data-table .column-header-background {
+    -fx-background-color: #313244;
+}
+
+.data-table .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: #45475a;
+    -fx-border-width: 0 1 0 0;
+}
+
+.data-table .column-header .label {
+    -fx-text-fill: #cdd6f4;
+    -fx-font-weight: bold;
+    -fx-padding: 8px;
+}
+
+.data-table .table-row-cell {
+    -fx-background-color: #1e1e2e;
+    -fx-border-color: #313244;
+    -fx-border-width: 0 0 1 0;
+}
+
+.data-table .table-row-cell:odd {
+    -fx-background-color: #181825;
+}
+
+.data-table .table-row-cell:hover {
+    -fx-background-color: #45475a;
+}
+
+.data-table .table-row-cell:selected,
+.data-table .table-row-cell:selected:focused {
+    -fx-background-color: #89b4fa;
+}
+
+/* Використовуємо .table-cell замість .text, щоб уникнути багів з віртуалізацією таблиці */
+.data-table .table-row-cell:selected .table-cell {
+    -fx-text-fill: #1e1e2e;
+}
+
+.data-table .table-cell {
+    -fx-text-fill: #cdd6f4;
+    -fx-padding: 8px;
+    -fx-alignment: center-left;
+}
+
+/* --- Game Overlays & Modals (Catppuccin Mocha styled) --- */
+.overlay-container {
+    -fx-background-color: rgba(17, 17, 27, 0.75);
+    -fx-alignment: center;
+}
+
+.game-modal {
+    -fx-background-color: #1e1e2e;
+    -fx-border-color: #89b4fa;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 15, 0, 0, 8);
+}
+
+.modal-header {
+    -fx-border-color: #313244;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 12 0;
+}
+
+.modal-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #89b4fa;
+}

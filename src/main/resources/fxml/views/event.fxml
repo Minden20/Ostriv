@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox spacing="15.0" styleClass="content-area" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.minden.ui.controller.EventController">
+    <!-- Ліва частина: Таблиця -->
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label text="Управління подіями" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="Оновити" onAction="#handleRefresh" styleClass="action-button"/>
+        </HBox>
+
+        <TableView fx:id="eventsTable" VBox.vgrow="ALWAYS" styleClass="data-table">
+            <columns>
+                <TableColumn fx:id="idColumn" text="ID" prefWidth="40" />
+                <TableColumn fx:id="nameColumn" text="Назва" prefWidth="120" />
+                <TableColumn fx:id="descriptionColumn" text="Опис" prefWidth="200" />
+                <TableColumn fx:id="minGoldPenaltyColumn" text="Мін. штраф" prefWidth="90" />
+                <TableColumn fx:id="maxGoldPenaltyColumn" text="Макс. штраф" prefWidth="90" />
+            </columns>
+        </TableView>
+    </VBox>
+</HBox>

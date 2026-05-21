@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane styleClass="root-pane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.minden.ui.controller.LoginController">
+    <VBox alignment="CENTER" maxWidth="400" maxHeight="500" spacing="20.0" styleClass="login-box">
+        <padding>
+            <Insets bottom="40.0" left="40.0" right="40.0" top="40.0"/>
+        </padding>
+        
+        <Label fx:id="titleLabel" text="Вхід у систему" styleClass="title-label"/>
+        
+        <VBox spacing="5.0">
+            <Label text="Ім'я користувача"/>
+            <TextField fx:id="usernameField" promptText="Введіть username" styleClass="input-field"/>
+        </VBox>
+        
+        <VBox fx:id="emailContainer" spacing="5.0" managed="false" visible="false">
+            <Label text="Email"/>
+            <TextField fx:id="emailField" promptText="Введіть email" styleClass="input-field"/>
+        </VBox>
+        
+        <VBox spacing="5.0">
+            <Label text="Пароль"/>
+            <PasswordField fx:id="passwordField" promptText="Введіть пароль" styleClass="input-field"/>
+        </VBox>
+        
+        <Label fx:id="errorLabel" text="Помилка" styleClass="error-label" visible="false" wrapText="true"/>
+        
+        <Button fx:id="actionButton" text="Увійти" onAction="#handleAction" styleClass="primary-button" maxWidth="Infinity"/>
+        
+        <Button fx:id="toggleModeButton" text="Немає акаунту? Зареєструватись" onAction="#toggleMode" styleClass="link-button" />
+    </VBox>
+</StackPane>

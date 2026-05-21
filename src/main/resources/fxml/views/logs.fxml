@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15.0" styleClass="content-area" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.minden.ui.controller.LogsController">
+    <HBox alignment="CENTER_LEFT" spacing="10.0">
+        <Label text="Щоденник подорожей" styleClass="section-title"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button text="Оновити щоденник" onAction="#handleRefresh" styleClass="action-button"/>
+    </HBox>
+
+    <TableView fx:id="logsTable" VBox.vgrow="ALWAYS" styleClass="data-table">
+        <columns>
+            <TableColumn fx:id="createdAtColumn" text="Час запису" prefWidth="150" />
+            <TableColumn fx:id="adventureColumn" text="Запис у щоденнику" prefWidth="650" />
+        </columns>
+    </TableView>
+</VBox>

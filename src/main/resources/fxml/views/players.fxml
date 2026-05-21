@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox spacing="15.0" styleClass="content-area" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.minden.ui.controller.PlayersController">
+    <!-- Ліва частина: Таблиця -->
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="15.0">
+            <Label text="Управління гравцями" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <TextField fx:id="searchField" promptText="Пошук за іменем/email..." styleClass="input-field" prefWidth="250" />
+            <Button text="Оновити" onAction="#handleRefresh" styleClass="action-button"/>
+        </HBox>
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label text="Фільтри:"/>
+            <TextField fx:id="minGoldFilter" promptText="Мін. Золото" styleClass="input-field" prefWidth="100" />
+            <TextField fx:id="maxGoldFilter" promptText="Макс. Золото" styleClass="input-field" prefWidth="100" />
+            <TextField fx:id="minEnergyFilter" promptText="Мін. Енергія" styleClass="input-field" prefWidth="100" />
+            <TextField fx:id="maxEnergyFilter" promptText="Макс. Енергія" styleClass="input-field" prefWidth="100" />
+            <Button text="Очистити" onAction="#handleClearFilters" styleClass="action-button" />
+        </HBox>        
+        <TableView fx:id="playersTable" VBox.vgrow="ALWAYS" styleClass="data-table">
+            <columns>
+                <TableColumn fx:id="idColumn" text="ID" prefWidth="40" />
+                <TableColumn fx:id="usernameColumn" text="Ім'я" prefWidth="120" />
+                <TableColumn fx:id="emailColumn" text="Email" prefWidth="160" />
+                <TableColumn fx:id="goldColumn" text="Золото" prefWidth="80" />
+                <TableColumn fx:id="energyColumn" text="Енергія" prefWidth="80" />
+            </columns>
+        </TableView>
+    </VBox>
+
+</HBox>
