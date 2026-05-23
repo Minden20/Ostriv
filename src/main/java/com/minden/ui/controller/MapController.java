@@ -172,7 +172,7 @@ public class MapController {
                         int dx = tx - px;
                         int dy = ty - py;
                         if (dx * dx + dy * dy <= 16) {
-                            gc.setFill(Color.web("#f9e2af")); // Золотистий колір
+                            gc.setFill(Color.web("#8B4513"));
                             double padding = 6.0;
                             gc.fillOval(
                                     tx * TILE_SIZE + padding,
