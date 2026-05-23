@@ -164,4 +164,15 @@ public class MapTileRepositoryImpl implements MapTileRepository {
         }
         return modifications;
     }
+
+    @Override
+    public void initializeCityTiles() {
+        String sql = "UPDATE map_tile SET terrain_type = 'City' WHERE x BETWEEN 4 AND 8 AND y BETWEEN 4 AND 8";
+        try (var connection = connectionPool.getConnection();
+             var stmt = connection.prepareStatement(sql)) {
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

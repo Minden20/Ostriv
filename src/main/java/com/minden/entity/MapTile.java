@@ -17,6 +17,8 @@ public class MapTile {
 
     public int getMovementCost() {
         switch (terrainType.toLowerCase()) {
+            case "city":
+                return 1;
             case "forest":
                 return 1;
             case "water":

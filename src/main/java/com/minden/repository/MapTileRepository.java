@@ -22,4 +22,6 @@ public interface MapTileRepository {
     void saveModification(Integer playerId, Integer x, Integer y, String newTerrainType);
 
     List<PlayerMapModification> findModificationsByPlayerId(Integer playerId);
+
+    void initializeCityTiles();
 }

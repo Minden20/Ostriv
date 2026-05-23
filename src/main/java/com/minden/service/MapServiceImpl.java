@@ -93,7 +93,8 @@ public class MapServiceImpl implements MapService {
             
             System.out.println("Розпарсено " + mapTiles.size() + " клітинок. Зберігаємо в БД...");
             mapRepository.batchInsert(mapTiles);
-            System.out.println("Карту успішно збережено в БД!");
+            mapRepository.initializeCityTiles();
+            System.out.println("Карту успішно збережено в БД та ініціалізовано місто!");
         }
     }
     

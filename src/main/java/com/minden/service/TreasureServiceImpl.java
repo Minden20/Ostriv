@@ -54,4 +54,14 @@ public class TreasureServiceImpl implements TreasureService {
             }
         }
     }
+
+    @Override
+    public boolean checkVictoryCondition(Integer playerId) {
+        if (playerId == null) {
+            return false;
+        }
+        int totalTreasures = treasureRepository.findAll().size();
+        int collectedTreasures = treasureRepository.findCollectedTreasureIdsByPlayerId(playerId).size();
+        return collectedTreasures >= totalTreasures && totalTreasures > 0;
+    }
 }

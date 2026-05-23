@@ -309,6 +309,10 @@ public class MapController {
                                                     .isValid(true)
                                                     .createdAt(java.time.LocalDateTime.now())
                                                     .build());
+
+                                            if (treasureService.checkVictoryCondition(currentUser.getId())) {
+                                                javafx.application.Platform.runLater(() -> showVictoryOverlay());
+                                            }
                                         }
                                     }
 
@@ -384,6 +388,8 @@ public class MapController {
                 return Color.web("#a6e3a1"); // Зелений (Forest)
             case "Sand":
                 return Color.web("#f9e2af"); // Жовтуватий (Sand)
+            case "City":
+                return Color.web("#fab387"); // Теплий помаранчевий (City)
             default:
                 return Color.GRAY; // Невідомий тип
         }
@@ -397,61 +403,164 @@ public class MapController {
         }
 
         try {
-            // 1. Відновлюємо енергію гравця до максимуму (наприклад, +50 до ліміту 100)
+            List<MapTile> tiles = mapService.getMapForPlayer(currentUser.getId());
+            MapTile[][] grid = new MapTile[MAP_WIDTH][MAP_HEIGHT];
+            for (MapTile tile : tiles) {
+                grid[tile.getX()][tile.getY()] = tile;
+            }
+
+            int px = currentUser.getX();
+            int py = currentUser.getY();
+            MapTile currentTile = grid[px][py];
+            boolean isInCity = currentTile != null && "City".equalsIgnoreCase(currentTile.getTerrainType());
+
+            showRestChoiceOverlay(isInCity);
+        } catch (Exception e) {
+            System.err.println("Помилка при перевірці відпочинку: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void showRestChoiceOverlay(boolean isInCity) {
+        if (mapRootPane == null) {
+            return;
+        }
+
+        StackPane backdrop = new StackPane();
+        backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.85); -fx-alignment: center;");
+
+        VBox dialogBox = new VBox(20);
+        dialogBox.setStyle("-fx-background-color: #1e1e2e; "
+                + "-fx-border-color: #cba6f7; "
+                + "-fx-border-width: 2px; "
+                + "-fx-border-radius: 12px; "
+                + "-fx-background-radius: 12px; "
+                + "-fx-padding: 30px; "
+                + "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 8);");
+        dialogBox.setMaxSize(480, 350);
+        dialogBox.setAlignment(Pos.CENTER);
+
+        Label titleLabel = new Label("⛺ Вибір місця для ночівлі");
+        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #cba6f7;");
+
+        Label descLabel = new Label(isInCity
+                ? "Ви перебуваєте в безпечних стінах міста. Де ви бажаєте заночувати?"
+                : "Навколо лише дика природа та небезпеки. Ви можете розбити табір тут безкоштовно, але це ризиковано.");
+        descLabel.setWrapText(true);
+        descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #cdd6f4; -fx-text-alignment: center;");
+
+        VBox buttonsBox = new VBox(12);
+        buttonsBox.setAlignment(Pos.CENTER);
+
+        Button wildRestBtn = new Button(isInCity ? "Спати на вулиці міста (Безкоштовно, небезпечно)" : "Розбити табір (Безкоштовно, небезпечно)");
+        wildRestBtn.setStyle("-fx-background-color: #f38ba8; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;");
+        wildRestBtn.setOnAction(e -> {
+            mapRootPane.getChildren().remove(backdrop);
+            processRest(false); // false = небезпечний відпочинок
+        });
+
+        wildRestBtn.setOnMouseEntered(e -> wildRestBtn.setStyle("-fx-background-color: #e64553; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
+        wildRestBtn.setOnMouseExited(e -> wildRestBtn.setStyle("-fx-background-color: #f38ba8; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
+
+        buttonsBox.getChildren().add(wildRestBtn);
+
+        if (isInCity) {
+            int tavernCost = 15;
+            Button tavernRestBtn = new Button("Орендувати кімнату в Таверні (💰 " + tavernCost + " Золота, безпечно)");
+            tavernRestBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;");
+
+            tavernRestBtn.setOnAction(e -> {
+                var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+                if (currentUser.getGold() >= tavernCost) {
+                    mapRootPane.getChildren().remove(backdrop);
+                    currentUser.setGold(currentUser.getGold() - tavernCost);
+                    processRest(true); // true = безпечний відпочинок
+                } else {
+                    descLabel.setText("❌ У вас недостатньо золота для кімнати в таверні!");
+                    descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #f38ba8; -fx-text-alignment: center;");
+                }
+            });
+
+            tavernRestBtn.setOnMouseEntered(e -> tavernRestBtn.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
+            tavernRestBtn.setOnMouseExited(e -> tavernRestBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
+
+            buttonsBox.getChildren().add(tavernRestBtn);
+        }
+
+        Button cancelBtn = new Button("Назад");
+        cancelBtn.setStyle("-fx-background-color: #313244; -fx-text-fill: #cdd6f4; -fx-font-size: 13px; -fx-padding: 8px 16px; -fx-background-radius: 6px; -fx-cursor: hand;");
+        cancelBtn.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
+
+        dialogBox.getChildren().addAll(titleLabel, descLabel, buttonsBox, cancelBtn);
+        backdrop.getChildren().add(dialogBox);
+        mapRootPane.getChildren().add(backdrop);
+    }
+
+    private void processRest(boolean isSafeRest) {
+        var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
+
+        try {
+            var playerRepo = ServiceFactory.getInstance().getPlayerRepository();
+
+            int nextDay = (currentUser.getCurrentDay() != null ? currentUser.getCurrentDay() : 1) + 1;
+            currentUser.setCurrentDay(nextDay);
+
             int oldEnergy = currentUser.getEnergy() != null ? currentUser.getEnergy() : 0;
-            int restoredEnergyAmount = 50;
+            int restoredEnergyAmount = isSafeRest ? 100 : 50;
             int newEnergy = Math.min(100, oldEnergy + restoredEnergyAmount);
             int actuallyRestored = newEnergy - oldEnergy;
             currentUser.setEnergy(newEnergy);
 
-            // Оновлюємо в базі даних
-            var playerRepo = ServiceFactory.getInstance().getPlayerRepository();
             playerRepo.findById(currentUser.getId()).ifPresent(player -> {
                 player.setEnergy(newEnergy);
+                player.setGold(currentUser.getGold());
+                player.setCurrentDay(nextDay);
                 playerRepo.update(player);
             });
-
-            // 2. Викликаємо випадкову подію з бази даних
-            var eventRepo = ServiceFactory.getInstance().getEventRepository();
-            List<com.minden.entity.Event> events = eventRepo.findAll();
 
             String eventName = "Спокійний відпочинок";
             String eventDescription = "Ви чудово відпочили біля багаття під зоряним небом. Навколо тихо і спокійно.";
             int goldLost = 0;
 
-            if (events != null && !events.isEmpty()) {
-                // Обираємо випадкову подію
-                int randomIndex = (int) (Math.random() * events.size());
-                com.minden.entity.Event randomEvent = events.get(randomIndex);
+            if (isSafeRest) {
+                eventName = "Затишна ніч у таверні";
+                eventDescription = "Ви смачно повечеряли та міцно виспалися на м'якому ліжку таверни. Жодних пригод цієї ночі не сталося.";
+            } else {
+                var eventRepo = ServiceFactory.getInstance().getEventRepository();
+                List<com.minden.entity.Event> events = eventRepo.findAll();
 
-                eventName = randomEvent.getName();
-                eventDescription = randomEvent.getDescription();
+                if (events != null && !events.isEmpty()) {
+                    int randomIndex = (int) (Math.random() * events.size());
+                    com.minden.entity.Event randomEvent = events.get(randomIndex);
 
-                // Вираховуємо штраф золота
-                int minPenalty = randomEvent.getMinGoldPenalty() != null ? randomEvent.getMinGoldPenalty() : 0;
-                int maxPenalty = randomEvent.getMaxGoldPenalty() != null ? randomEvent.getMaxGoldPenalty() : 0;
-                goldLost = minPenalty + (int) (Math.random() * ((maxPenalty - minPenalty) + 1));
+                    eventName = randomEvent.getName();
+                    eventDescription = randomEvent.getDescription();
 
-                // Зменшуємо золото гравця
-                int oldGold = currentUser.getGold() != null ? currentUser.getGold() : 0;
-                int newGold = Math.max(0, oldGold - goldLost);
-                currentUser.setGold(newGold);
+                    int minPenalty = randomEvent.getMinGoldPenalty() != null ? randomEvent.getMinGoldPenalty() : 0;
+                    int maxPenalty = randomEvent.getMaxGoldPenalty() != null ? randomEvent.getMaxGoldPenalty() : 0;
+                    goldLost = minPenalty + (int) (Math.random() * ((maxPenalty - minPenalty) + 1));
 
-                // Оновлюємо в базі даних
-                playerRepo.findById(currentUser.getId()).ifPresent(player -> {
-                    player.setGold(newGold);
-                    playerRepo.update(player);
-                });
+                    int oldGold = currentUser.getGold() != null ? currentUser.getGold() : 0;
+                    int newGold = Math.max(0, oldGold - goldLost);
+                    currentUser.setGold(newGold);
 
-                // Записуємо в історію подій гравця
-                playerRepo.addEventToHistory(currentUser.getId(), randomEvent.getId(), currentUser.getCurrentDay());
+                    playerRepo.findById(currentUser.getId()).ifPresent(player -> {
+                        player.setGold(newGold);
+                        playerRepo.update(player);
+                    });
+
+                    playerRepo.addEventToHistory(currentUser.getId(), randomEvent.getId(), nextDay);
+                }
             }
 
             // Записуємо лог дії в ACTION_LOG
             var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
             actionLogRepo.save(com.minden.entity.ActionLog.builder()
                     .playerId(currentUser.getId())
-                    .actionType("REST")
+                    .actionType(isSafeRest ? "TAVERN_REST" : "WILD_REST")
                     .fromX(currentUser.getX())
                     .fromY(currentUser.getY())
                     .toX(currentUser.getX())
@@ -460,16 +569,14 @@ public class MapController {
                     .createdAt(java.time.LocalDateTime.now())
                     .build());
 
-            // Оновлюємо верхній UI з характеристиками
             if (MainController.getInstance() != null) {
                 MainController.getInstance().updatePlayerStats();
             }
 
-            // 3. Відображаємо гарний кастомний модальний оверлей події
             showEventOverlay(eventName, eventDescription, goldLost, actuallyRestored);
 
         } catch (Exception e) {
-            System.err.println("Помилка під час відпочинку: " + e.getMessage());
+            System.err.println("Помилка під час обробки відпочинку: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -479,26 +586,21 @@ public class MapController {
             return;
         }
 
-        // Затемнений фон
         StackPane backdrop = new StackPane();
         backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.85); -fx-alignment: center;");
 
-        // Модальне віконце
         VBox dialogBox = new VBox(20);
         dialogBox.setStyle("-fx-background-color: #1e1e2e; -fx-border-color: #eba0ac; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 30px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 8);");
         dialogBox.setMaxSize(450, 320);
         dialogBox.setAlignment(Pos.CENTER);
 
-        // Заголовок події
         Label titleLabel = new Label("🔥 Подія: " + title);
         titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #eba0ac;");
 
-        // Опис події
         Label descLabel = new Label(description);
         descLabel.setWrapText(true);
         descLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #cdd6f4; -fx-alignment: center; -fx-text-alignment: center;");
 
-        // Контейнер змін характеристик
         HBox statsBox = new HBox(25);
         statsBox.setAlignment(Pos.CENTER);
 
@@ -510,19 +612,69 @@ public class MapController {
 
         statsBox.getChildren().addAll(energyDiff, goldDiff);
 
-        // Кнопка закриття
         Button closeButton = new Button("Продовжити подорож");
         closeButton.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;");
         closeButton.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
 
-        // Анімація ховеру
         closeButton.setOnMouseEntered(e -> closeButton.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;"));
         closeButton.setOnMouseExited(e -> closeButton.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;"));
 
         dialogBox.getChildren().addAll(titleLabel, descLabel, statsBox, closeButton);
         backdrop.getChildren().add(dialogBox);
 
-        // Додаємо на екран поверх карти
+        mapRootPane.getChildren().add(backdrop);
+    }
+
+    private void showVictoryOverlay() {
+        if (mapRootPane == null) {
+            return;
+        }
+
+        StackPane backdrop = new StackPane();
+        backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.9); -fx-alignment: center;");
+
+        VBox victoryBox = new VBox(25);
+        victoryBox.setStyle("-fx-background-color: #1e1e2e; "
+                + "-fx-border-color: #a6e3a1; "
+                + "-fx-border-width: 3px; "
+                + "-fx-border-radius: 16px; "
+                + "-fx-background-radius: 16px; "
+                + "-fx-padding: 40px; "
+                + "-fx-effect: dropshadow(three-pass-box, rgba(166,227,161,0.3), 20, 0, 0, 0);");
+        victoryBox.setMaxSize(500, 380);
+        victoryBox.setAlignment(Pos.CENTER);
+
+        Label trophyLabel = new Label("🏆");
+        trophyLabel.setStyle("-fx-font-size: 64px;");
+
+        Label titleLabel = new Label("ВЕЛИКА ПЕРЕМОГА!");
+        titleLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #a6e3a1;");
+
+        var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+        String victoryText = String.format(
+                "Вітаємо, %s!\nВи знайшли всі приховані скарби на острові!\n"
+                + "Ви витратили: %d днів (ходів).\n"
+                + "Ваше фінальне золото: 💰 %d",
+                currentUser.getUsername(), currentUser.getCurrentDay(), currentUser.getGold()
+        );
+
+        Label descLabel = new Label(victoryText);
+        descLabel.setWrapText(true);
+        descLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #cdd6f4; -fx-text-alignment: center; -fx-line-spacing: 5px;");
+
+        Button exitBtn = new Button("Повернутися в меню");
+        exitBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 8px; -fx-cursor: hand;");
+        exitBtn.setOnAction(e -> {
+            mapRootPane.getChildren().remove(backdrop);
+            com.minden.ui.SessionContext.getInstance().logout();
+            com.minden.ui.JavaFxApp.setRoot("login");
+        });
+
+        exitBtn.setOnMouseEntered(ev -> exitBtn.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 8px; -fx-cursor: hand;"));
+        exitBtn.setOnMouseExited(ev -> exitBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 8px; -fx-cursor: hand;"));
+
+        victoryBox.getChildren().addAll(trophyLabel, titleLabel, descLabel, exitBtn);
+        backdrop.getChildren().add(victoryBox);
         mapRootPane.getChildren().add(backdrop);
     }
 }

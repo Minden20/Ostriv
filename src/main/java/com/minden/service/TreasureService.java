@@ -8,4 +8,5 @@ public interface TreasureService {
     List<TreasureDto> findAll();
     List<TreasureDto> findAllForPlayer(Integer playerId);
     void collectTreasure(Integer playerId, Integer treasureId);
+    boolean checkVictoryCondition(Integer playerId);
 }
