@@ -17,6 +17,18 @@
             <Label text="Ostriv RPG" styleClass="header-title"/>
             <Button text="Щоденник подорожей" onAction="#handleShowLogs" styleClass="action-button"/>
             <Region HBox.hgrow="ALWAYS" />
+            <HBox spacing="15.0" alignment="CENTER_LEFT" styleClass="stats-container">
+                <HBox spacing="5.0" alignment="CENTER_LEFT">
+                    <Label text="💰" styleClass="stat-icon"/>
+                    <Label text="Золото:" styleClass="stat-label"/>
+                    <Label fx:id="goldLabel" text="0" styleClass="stat-value-gold"/>
+                </HBox>
+                <HBox spacing="5.0" alignment="CENTER_LEFT">
+                    <Label text="⚡" styleClass="stat-icon"/>
+                    <Label text="Енергія:" styleClass="stat-label"/>
+                    <Label fx:id="energyLabel" text="0" styleClass="stat-value-energy"/>
+                </HBox>
+            </HBox>
             <Label fx:id="userGreetingLabel" styleClass="header-user"/>
             <Button text="Вийти" onAction="#handleLogout" styleClass="logout-button"/>
         </HBox>

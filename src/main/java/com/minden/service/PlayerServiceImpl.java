@@ -1,17 +1,16 @@
 package com.minden.service;
 
-import com.minden.dto.PlayerDto;
-import com.minden.entity.Player;
-import com.minden.exception.ValidationException;
-import com.minden.repository.PlayerRepository;
-import com.minden.util.Validator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.minden.dto.PlayerDto;
+import com.minden.entity.Player;
+import com.minden.repository.PlayerRepository;
+
 /**
- * Реалізація сервісу бізнес-операцій над гравцями.
- * Інкапсулює бізнес-логіку та повертає DTO замість Entity.
+ * Реалізація сервісу бізнес-операцій над гравцями. Інкапсулює бізнес-логіку та
+ * повертає DTO замість Entity.
  */
 public class PlayerServiceImpl implements PlayerService {
 
@@ -37,7 +36,6 @@ public class PlayerServiceImpl implements PlayerService {
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
-
 
     /**
      * Конвертує Entity в DTO (без passwordHash).

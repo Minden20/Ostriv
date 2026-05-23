@@ -13,8 +13,8 @@ import com.minden.repository.PlayerRepository;
 import com.minden.util.Validator;
 
 /**
- * Реалізація сервісу аутентифікації.
- * Відповідає за реєстрацію та логін гравців з використанням інфраструктурних сервісів.
+ * Реалізація сервісу аутентифікації. Відповідає за реєстрацію та логін гравців
+ * з використанням інфраструктурних сервісів.
  */
 public class AuthServiceImpl implements AuthenticationService {
 
@@ -26,8 +26,8 @@ public class AuthServiceImpl implements AuthenticationService {
      * Конструктор з ін'єкцією залежності (Dependency Injection).
      *
      * @param playerRepository репозиторій для доступу до даних гравців
-     * @param hashingService   інфраструктурний сервіс для роботи з хешуванням
-     * @param emailService     інфраструктурний сервіс для роботи з поштою
+     * @param hashingService інфраструктурний сервіс для роботи з хешуванням
+     * @param emailService інфраструктурний сервіс для роботи з поштою
      */
     public AuthServiceImpl(PlayerRepository playerRepository, HashingService hashingService, EmailService emailService) {
         this.playerRepository = playerRepository;
@@ -65,8 +65,8 @@ public class AuthServiceImpl implements AuthenticationService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .passwordHash(hashedPassword)
-                .x(0)
-                .y(0)
+                .x(25)
+                .y(30)
                 .gold(100)
                 .energy(50)
                 .currentDay(1)

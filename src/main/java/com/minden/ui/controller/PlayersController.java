@@ -3,37 +3,44 @@ package com.minden.ui.controller;
 import com.minden.config.ServiceFactory;
 import com.minden.dto.PlayerDto;
 import com.minden.service.PlayerService;
-import java.util.Optional;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.VBox;
 
 public class PlayersController {
 
-    @FXML private TableView<PlayerDto> playersTable;
-    @FXML private TableColumn<PlayerDto, Integer> idColumn;
-    @FXML private TableColumn<PlayerDto, String> usernameColumn;
-    @FXML private TableColumn<PlayerDto, String> emailColumn;
-    @FXML private TableColumn<PlayerDto, Integer> goldColumn;
-    @FXML private TableColumn<PlayerDto, Integer> energyColumn;
+    @FXML
+    private TableView<PlayerDto> playersTable;
+    @FXML
+    private TableColumn<PlayerDto, Integer> idColumn;
+    @FXML
+    private TableColumn<PlayerDto, String> usernameColumn;
+    @FXML
+    private TableColumn<PlayerDto, String> emailColumn;
+    @FXML
+    private TableColumn<PlayerDto, Integer> goldColumn;
+    @FXML
+    private TableColumn<PlayerDto, Integer> energyColumn;
 
-    @FXML private TextField searchField;
-    
+    @FXML
+    private TextField searchField;
+
     // Фільтри
-    @FXML private TextField minGoldFilter;
-    @FXML private TextField maxGoldFilter;
-    @FXML private TextField minEnergyFilter;
-    @FXML private TextField maxEnergyFilter;
+    @FXML
+    private TextField minGoldFilter;
+    @FXML
+    private TextField maxGoldFilter;
+    @FXML
+    private TextField minEnergyFilter;
+    @FXML
+    private TextField maxEnergyFilter;
 
     private PlayerService playerService;
     private ObservableList<PlayerDto> playersData = FXCollections.observableArrayList();
@@ -95,25 +102,35 @@ public class PlayersController {
             try {
                 if (minGoldFilter.getText() != null && !minGoldFilter.getText().trim().isEmpty()) {
                     int minGold = Integer.parseInt(minGoldFilter.getText().trim());
-                    if (player.getGold() == null || player.getGold() < minGold) return false;
+                    if (player.getGold() == null || player.getGold() < minGold) {
+                        return false;
+                    }
                 }
                 if (maxGoldFilter.getText() != null && !maxGoldFilter.getText().trim().isEmpty()) {
                     int maxGold = Integer.parseInt(maxGoldFilter.getText().trim());
-                    if (player.getGold() == null || player.getGold() > maxGold) return false;
+                    if (player.getGold() == null || player.getGold() > maxGold) {
+                        return false;
+                    }
                 }
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
 
             // Фільтр по енергії
             try {
                 if (minEnergyFilter.getText() != null && !minEnergyFilter.getText().trim().isEmpty()) {
                     int minEnergy = Integer.parseInt(minEnergyFilter.getText().trim());
-                    if (player.getEnergy() == null || player.getEnergy() < minEnergy) return false;
+                    if (player.getEnergy() == null || player.getEnergy() < minEnergy) {
+                        return false;
+                    }
                 }
                 if (maxEnergyFilter.getText() != null && !maxEnergyFilter.getText().trim().isEmpty()) {
                     int maxEnergy = Integer.parseInt(maxEnergyFilter.getText().trim());
-                    if (player.getEnergy() == null || player.getEnergy() > maxEnergy) return false;
+                    if (player.getEnergy() == null || player.getEnergy() > maxEnergy) {
+                        return false;
+                    }
                 }
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
 
             return true;
         });
@@ -127,6 +144,5 @@ public class PlayersController {
         minEnergyFilter.clear();
         maxEnergyFilter.clear();
     }
-
 
 }

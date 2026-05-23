@@ -10,14 +10,22 @@ import com.minden.service.PathFinder;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 public class MapController {
 
+    @FXML
+    private StackPane mapRootPane;
     @FXML
     private ScrollPane scrollPane;
     @FXML
@@ -153,6 +161,12 @@ public class MapController {
             return;
         }
 
+        // Перевіряємо, чи є енергія для початку руху
+        if (currentUser.getEnergy() == null || currentUser.getEnergy() <= 0) {
+            System.out.println("Рух неможливий: недостатньо енергії!");
+            return;
+        }
+
         int startX = currentUser.getX();
         int startY = currentUser.getY();
         if (startX == targetX && startY == targetY) {
@@ -179,6 +193,14 @@ public class MapController {
                 return;
             }
 
+            var playerPosition = currentUser;
+            if (endTile != null && playerPosition != null) {
+                if ("Water".equalsIgnoreCase(endTile.getTerrainType())) {
+                    System.out.println("Рух неможливий: обрана клітинка є водою!");
+                    return;
+                }
+            }
+
             // Обчислюємо шлях за допомогою PathFinder
             PathFinder pathFinder = new PathFinder();
             List<String> pathCoords = pathFinder.findPath(grid, startTile, endTile);
@@ -197,6 +219,23 @@ public class MapController {
                     KeyFrame keyFrame = new KeyFrame(
                             Duration.millis(150 * stepIndex),
                             event -> {
+                                // Визначаємо вартість переміщення на наступний тайл
+                                MapTile nextTile = grid[nextX][nextY];
+                                int stepCost = nextTile != null ? nextTile.getMovementCost() : 1;
+
+                                // Перевіряємо енергію перед кожним кроком з урахуванням вартості тайлу
+                                if (currentUser.getEnergy() == null || currentUser.getEnergy() < stepCost) {
+                                    System.out.println("Рух зупинено: недостатньо енергії для кроку на "
+                                            + (nextTile != null ? nextTile.getTerrainType() : "тайл") + " (потрібно " + stepCost + ")!");
+                                    if (movementTimeline != null) {
+                                        movementTimeline.stop();
+                                    }
+                                    return;
+                                }
+
+                                // Зменшуємо енергію на вартість переміщення тайлу
+                                currentUser.setEnergy(currentUser.getEnergy() - stepCost);
+
                                 int currentX = currentUser.getX();
                                 int currentY = currentUser.getY();
 
@@ -216,8 +255,14 @@ public class MapController {
                                     playerRepo.findById(currentUser.getId()).ifPresent(player -> {
                                         player.setX(nextX);
                                         player.setY(nextY);
+                                        player.setEnergy(currentUser.getEnergy());
                                         playerRepo.update(player);
                                     });
+
+                                    // Оновлюємо відображення характеристик на головній панелі
+                                    if (com.minden.ui.controller.MainController.getInstance() != null) {
+                                        com.minden.ui.controller.MainController.getInstance().updatePlayerStats();
+                                    }
 
                                     var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
                                     actionLogRepo.save(com.minden.entity.ActionLog.builder()
@@ -248,6 +293,11 @@ public class MapController {
                                                 player.setGold(currentUser.getGold());
                                                 playerRepo.update(player);
                                             });
+
+                                            // Миттєво оновлюємо нове золото на екрані
+                                            if (com.minden.ui.controller.MainController.getInstance() != null) {
+                                                com.minden.ui.controller.MainController.getInstance().updatePlayerStats();
+                                            }
 
                                             actionLogRepo.save(com.minden.entity.ActionLog.builder()
                                                     .playerId(currentUser.getId())
@@ -337,5 +387,142 @@ public class MapController {
             default:
                 return Color.GRAY; // Невідомий тип
         }
+    }
+
+    @FXML
+    private void handleRest() {
+        var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
+
+        try {
+            // 1. Відновлюємо енергію гравця до максимуму (наприклад, +50 до ліміту 100)
+            int oldEnergy = currentUser.getEnergy() != null ? currentUser.getEnergy() : 0;
+            int restoredEnergyAmount = 50;
+            int newEnergy = Math.min(100, oldEnergy + restoredEnergyAmount);
+            int actuallyRestored = newEnergy - oldEnergy;
+            currentUser.setEnergy(newEnergy);
+
+            // Оновлюємо в базі даних
+            var playerRepo = ServiceFactory.getInstance().getPlayerRepository();
+            playerRepo.findById(currentUser.getId()).ifPresent(player -> {
+                player.setEnergy(newEnergy);
+                playerRepo.update(player);
+            });
+
+            // 2. Викликаємо випадкову подію з бази даних
+            var eventRepo = ServiceFactory.getInstance().getEventRepository();
+            List<com.minden.entity.Event> events = eventRepo.findAll();
+
+            String eventName = "Спокійний відпочинок";
+            String eventDescription = "Ви чудово відпочили біля багаття під зоряним небом. Навколо тихо і спокійно.";
+            int goldLost = 0;
+
+            if (events != null && !events.isEmpty()) {
+                // Обираємо випадкову подію
+                int randomIndex = (int) (Math.random() * events.size());
+                com.minden.entity.Event randomEvent = events.get(randomIndex);
+
+                eventName = randomEvent.getName();
+                eventDescription = randomEvent.getDescription();
+
+                // Вираховуємо штраф золота
+                int minPenalty = randomEvent.getMinGoldPenalty() != null ? randomEvent.getMinGoldPenalty() : 0;
+                int maxPenalty = randomEvent.getMaxGoldPenalty() != null ? randomEvent.getMaxGoldPenalty() : 0;
+                goldLost = minPenalty + (int) (Math.random() * ((maxPenalty - minPenalty) + 1));
+
+                // Зменшуємо золото гравця
+                int oldGold = currentUser.getGold() != null ? currentUser.getGold() : 0;
+                int newGold = Math.max(0, oldGold - goldLost);
+                currentUser.setGold(newGold);
+
+                // Оновлюємо в базі даних
+                playerRepo.findById(currentUser.getId()).ifPresent(player -> {
+                    player.setGold(newGold);
+                    playerRepo.update(player);
+                });
+
+                // Записуємо в історію подій гравця
+                playerRepo.addEventToHistory(currentUser.getId(), randomEvent.getId(), currentUser.getCurrentDay());
+            }
+
+            // Записуємо лог дії в ACTION_LOG
+            var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
+            actionLogRepo.save(com.minden.entity.ActionLog.builder()
+                    .playerId(currentUser.getId())
+                    .actionType("REST")
+                    .fromX(currentUser.getX())
+                    .fromY(currentUser.getY())
+                    .toX(currentUser.getX())
+                    .toY(currentUser.getY())
+                    .isValid(true)
+                    .createdAt(java.time.LocalDateTime.now())
+                    .build());
+
+            // Оновлюємо верхній UI з характеристиками
+            if (MainController.getInstance() != null) {
+                MainController.getInstance().updatePlayerStats();
+            }
+
+            // 3. Відображаємо гарний кастомний модальний оверлей події
+            showEventOverlay(eventName, eventDescription, goldLost, actuallyRestored);
+
+        } catch (Exception e) {
+            System.err.println("Помилка під час відпочинку: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void showEventOverlay(String title, String description, int goldLost, int energyRestored) {
+        if (mapRootPane == null) {
+            return;
+        }
+
+        // Затемнений фон
+        StackPane backdrop = new StackPane();
+        backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.85); -fx-alignment: center;");
+
+        // Модальне віконце
+        VBox dialogBox = new VBox(20);
+        dialogBox.setStyle("-fx-background-color: #1e1e2e; -fx-border-color: #eba0ac; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 30px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 8);");
+        dialogBox.setMaxSize(450, 320);
+        dialogBox.setAlignment(Pos.CENTER);
+
+        // Заголовок події
+        Label titleLabel = new Label("🔥 Подія: " + title);
+        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #eba0ac;");
+
+        // Опис події
+        Label descLabel = new Label(description);
+        descLabel.setWrapText(true);
+        descLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #cdd6f4; -fx-alignment: center; -fx-text-alignment: center;");
+
+        // Контейнер змін характеристик
+        HBox statsBox = new HBox(25);
+        statsBox.setAlignment(Pos.CENTER);
+
+        Label energyDiff = new Label("⚡ +" + energyRestored + " Енергії");
+        energyDiff.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #89b4fa;");
+
+        Label goldDiff = new Label(goldLost > 0 ? "💰 -" + goldLost + " Золота" : "💰 Без втрат");
+        goldDiff.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: " + (goldLost > 0 ? "#f38ba8;" : "#a6e3a1;"));
+
+        statsBox.getChildren().addAll(energyDiff, goldDiff);
+
+        // Кнопка закриття
+        Button closeButton = new Button("Продовжити подорож");
+        closeButton.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;");
+        closeButton.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
+
+        // Анімація ховеру
+        closeButton.setOnMouseEntered(e -> closeButton.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;"));
+        closeButton.setOnMouseExited(e -> closeButton.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;"));
+
+        dialogBox.getChildren().addAll(titleLabel, descLabel, statsBox, closeButton);
+        backdrop.getChildren().add(dialogBox);
+
+        // Додаємо на екран поверх карти
+        mapRootPane.getChildren().add(backdrop);
     }
 }

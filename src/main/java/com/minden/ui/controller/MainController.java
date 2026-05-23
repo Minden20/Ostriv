@@ -21,20 +21,42 @@ public class MainController {
 
     @FXML private Label userGreetingLabel;
     @FXML private StackPane contentArea;
+    @FXML private Label goldLabel;
+    @FXML private Label energyLabel;
 
     private Node mapView;
     private StackPane activeOverlay;
 
+    private static MainController instance;
+
+    public static MainController getInstance() {
+        return instance;
+    }
+
     @FXML
     public void initialize() {
-        // Встановлюємо привітання
-        PlayerDto currentUser = SessionContext.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            userGreetingLabel.setText("Привіт, " + currentUser.getUsername() + "!");
-        }
+        instance = this;
+
+        // Встановлюємо привітання та статистику
+        updatePlayerStats();
 
         // Завантажуємо ігрову карту за замовчуванням
         loadMapView();
+    }
+
+    public void updatePlayerStats() {
+        PlayerDto currentUser = SessionContext.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            if (goldLabel != null) {
+                goldLabel.setText(String.valueOf(currentUser.getGold() != null ? currentUser.getGold() : 0));
+            }
+            if (energyLabel != null) {
+                energyLabel.setText(String.valueOf(currentUser.getEnergy() != null ? currentUser.getEnergy() : 0));
+            }
+            if (userGreetingLabel != null) {
+                userGreetingLabel.setText("Привіт, " + currentUser.getUsername() + "!");
+            }
+        }
     }
 
     private void loadMapView() {
