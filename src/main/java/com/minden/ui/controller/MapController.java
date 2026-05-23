@@ -39,6 +39,8 @@ public class MapController {
     private static final int MAP_WIDTH = 100;
     private static final int MAP_HEIGHT = 100;
 
+    private final boolean[][] exploredTiles = new boolean[MAP_WIDTH][MAP_HEIGHT];
+
     @FXML
     public void initialize() {
         try {
@@ -75,14 +77,28 @@ public class MapController {
         }
     }
 
+    private void updateFogOfWar(int playerX, int playerY) {
+        int radius = 4;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                int tx = playerX + dx;
+                int ty = playerY + dy;
+
+                if (tx >= 0 && tx < MAP_WIDTH && ty >= 0 && ty < MAP_HEIGHT) {
+                    if (dx * dx + dy * dy <= 16) {
+                        exploredTiles[tx][ty] = true;
+                    }
+                }
+            }
+        }
+    }
+
     private void drawMap() {
         GraphicsContext gc = mapCanvas.getGraphicsContext2D();
 
-        // Очищаємо фон
-        gc.setFill(Color.web("#1e1e2e"));
+        gc.setFill(Color.web("#0f0f17"));
         gc.fillRect(0, 0, mapCanvas.getWidth(), mapCanvas.getHeight());
 
-        // Завантажуємо тайли з бази (це працює швидко, бо їх всього 10к)
         var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
         Integer playerId = currentUser != null ? currentUser.getId() : null;
         List<MapTile> tiles = mapService.getMapForPlayer(playerId);
@@ -93,62 +109,108 @@ public class MapController {
             return;
         }
 
-        // Малюємо кожен тайл
+        MapTile[][] grid = new MapTile[MAP_WIDTH][MAP_HEIGHT];
         for (MapTile tile : tiles) {
-            Color color = getColorForTerrain(tile.getTerrainType());
-            gc.setFill(color);
-            gc.fillRect(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            grid[tile.getX()][tile.getY()] = tile;
         }
 
-        // Малюємо сітку для зручності
-        gc.setStroke(Color.web("#313244", 0.5));
+        int px = 0;
+        int py = 0;
+        boolean hasPlayer = false;
+
+        if (currentUser != null && currentUser.getX() != null && currentUser.getY() != null) {
+            px = currentUser.getX();
+            py = currentUser.getY();
+            hasPlayer = true;
+            updateFogOfWar(px, py);
+        }
+
         gc.setLineWidth(0.5);
-        for (int x = 0; x <= MAP_WIDTH; x++) {
-            gc.strokeLine(x * TILE_SIZE, 0, x * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
-        }
-        for (int y = 0; y <= MAP_HEIGHT; y++) {
-            gc.strokeLine(0, y * TILE_SIZE, MAP_WIDTH * TILE_SIZE, y * TILE_SIZE);
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            for (int y = 0; y < MAP_HEIGHT; y++) {
+                if (!exploredTiles[x][y]) {
+                    continue; // Закриті туманом тайли навіть не намагаємося рендерити!
+                }
+
+                MapTile tile = grid[x][y];
+                if (tile == null) {
+                    continue;
+                }
+
+                boolean isVisibleNow = false;
+                if (hasPlayer) {
+                    int dx = x - px;
+                    int dy = y - py;
+                    isVisibleNow = (dx * dx + dy * dy <= 16);
+                }
+
+                Color terrainColor = getColorForTerrain(tile.getTerrainType());
+
+                if (isVisibleNow) {
+                    gc.setFill(terrainColor);
+                } else {
+                    gc.setFill(terrainColor.deriveColor(0, 1.0, 0.40, 1.0));
+                }
+
+                gc.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+                gc.setStroke(Color.web("#313244", isVisibleNow ? 0.35 : 0.15));
+                gc.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            }
         }
 
-        // Відображення скарбів
         try {
             var treasureService = ServiceFactory.getInstance().getTreasureService();
             List<com.minden.dto.TreasureDto> treasures = treasureService.findAllForPlayer(playerId);
 
-            gc.setFill(Color.web("#8B4513")); // Коричневий колір для скарбів
-
             for (var treasure : treasures) {
                 if (!treasure.getIsCollected()) {
-                    // Малюємо коло, трохи менше за клітинку
-                    double padding = 2.0;
-                    gc.fillOval(
-                            treasure.getX() * TILE_SIZE + padding,
-                            treasure.getY() * TILE_SIZE + padding,
-                            TILE_SIZE - padding * 2,
-                            TILE_SIZE - padding * 2
-                    );
+                    int tx = treasure.getX();
+                    int ty = treasure.getY();
+
+                    if (hasPlayer) {
+                        int dx = tx - px;
+                        int dy = ty - py;
+                        if (dx * dx + dy * dy <= 16) {
+                            gc.setFill(Color.web("#f9e2af")); // Золотистий колір
+                            double padding = 6.0;
+                            gc.fillOval(
+                                    tx * TILE_SIZE + padding,
+                                    ty * TILE_SIZE + padding,
+                                    TILE_SIZE - padding * 2,
+                                    TILE_SIZE - padding * 2
+                            );
+                            gc.setStroke(Color.web("#1e1e2e"));
+                            gc.setLineWidth(1.0);
+                            gc.strokeOval(
+                                    tx * TILE_SIZE + padding,
+                                    ty * TILE_SIZE + padding,
+                                    TILE_SIZE - padding * 2,
+                                    TILE_SIZE - padding * 2
+                            );
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
             System.err.println("Помилка завантаження скарбів: " + e.getMessage());
         }
 
-        // Відображення гравця
-        if (currentUser != null && currentUser.getX() != null && currentUser.getY() != null) {
+        if (hasPlayer) {
             gc.setFill(Color.web("#f38ba8")); // Beautiful pastel pink/red
-            double padding = 1.0;
+            double padding = 2.0;
             double size = TILE_SIZE - padding * 2;
             gc.fillOval(
-                    currentUser.getX() * TILE_SIZE + padding,
-                    currentUser.getY() * TILE_SIZE + padding,
+                    px * TILE_SIZE + padding,
+                    py * TILE_SIZE + padding,
                     size,
                     size
             );
             gc.setStroke(Color.WHITE);
-            gc.setLineWidth(1.0);
+            gc.setLineWidth(1.5);
             gc.strokeOval(
-                    currentUser.getX() * TILE_SIZE + padding,
-                    currentUser.getY() * TILE_SIZE + padding,
+                    px * TILE_SIZE + padding,
+                    py * TILE_SIZE + padding,
                     size,
                     size
             );

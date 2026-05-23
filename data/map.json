@@ -9726,7 +9726,7 @@
       {
         "X": 44,
         "Y": 19,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 45,
@@ -10226,12 +10226,12 @@
       {
         "X": 44,
         "Y": 20,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 45,
         "Y": 20,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 46,
@@ -10731,17 +10731,17 @@
       {
         "X": 45,
         "Y": 21,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 46,
         "Y": 21,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 47,
         "Y": 21,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 48,
@@ -11241,12 +11241,12 @@
       {
         "X": 47,
         "Y": 22,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 48,
         "Y": 22,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 49,
@@ -11306,17 +11306,17 @@
       {
         "X": 60,
         "Y": 22,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 61,
         "Y": 22,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 62,
         "Y": 22,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 63,
@@ -11646,17 +11646,17 @@
       {
         "X": 28,
         "Y": 23,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 29,
         "Y": 23,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 30,
         "Y": 23,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 31,
@@ -11746,12 +11746,12 @@
       {
         "X": 48,
         "Y": 23,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 49,
         "Y": 23,
-        "Type": "Sand"
+        "Type": "Water"
       },
       {
         "X": 50,
@@ -11806,17 +11806,17 @@
       {
         "X": 60,
         "Y": 23,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 61,
         "Y": 23,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 62,
         "Y": 23,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 63,
@@ -12146,17 +12146,17 @@
       {
         "X": 28,
         "Y": 24,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 29,
         "Y": 24,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 30,
         "Y": 24,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 31,
@@ -12306,17 +12306,17 @@
       {
         "X": 60,
         "Y": 24,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 61,
         "Y": 24,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 62,
         "Y": 24,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 63,
@@ -12646,17 +12646,17 @@
       {
         "X": 28,
         "Y": 25,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 29,
         "Y": 25,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 30,
         "Y": 25,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 31,
@@ -18321,17 +18321,17 @@
       {
         "X": 63,
         "Y": 36,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 64,
         "Y": 36,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 65,
         "Y": 36,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 66,
@@ -18821,17 +18821,17 @@
       {
         "X": 63,
         "Y": 37,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 64,
         "Y": 37,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 65,
         "Y": 37,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 66,
@@ -19321,17 +19321,17 @@
       {
         "X": 63,
         "Y": 38,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 64,
         "Y": 38,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 65,
         "Y": 38,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 66,
@@ -21591,17 +21591,17 @@
       {
         "X": 17,
         "Y": 43,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 18,
         "Y": 43,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 19,
         "Y": 43,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 20,
@@ -22091,17 +22091,17 @@
       {
         "X": 17,
         "Y": 44,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 18,
         "Y": 44,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 19,
         "Y": 44,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 20,
@@ -22456,17 +22456,17 @@
       {
         "X": 90,
         "Y": 44,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 91,
         "Y": 44,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 92,
         "Y": 44,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 93,
@@ -22591,17 +22591,17 @@
       {
         "X": 17,
         "Y": 45,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 18,
         "Y": 45,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 19,
         "Y": 45,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 20,
@@ -22956,17 +22956,17 @@
       {
         "X": 90,
         "Y": 45,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 91,
         "Y": 45,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 92,
         "Y": 45,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 93,
@@ -23456,17 +23456,17 @@
       {
         "X": 90,
         "Y": 46,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 91,
         "Y": 46,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 92,
         "Y": 46,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 93,
@@ -25221,27 +25221,27 @@
       {
         "X": 43,
         "Y": 50,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 44,
         "Y": 50,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 45,
         "Y": 50,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 46,
         "Y": 50,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 47,
         "Y": 50,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 48,
@@ -25721,27 +25721,27 @@
       {
         "X": 43,
         "Y": 51,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 44,
         "Y": 51,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 45,
         "Y": 51,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 46,
         "Y": 51,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 47,
         "Y": 51,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 48,
@@ -26221,27 +26221,27 @@
       {
         "X": 43,
         "Y": 52,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 44,
         "Y": 52,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 45,
         "Y": 52,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 46,
         "Y": 52,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 47,
         "Y": 52,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 48,
@@ -26721,27 +26721,27 @@
       {
         "X": 43,
         "Y": 53,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 44,
         "Y": 53,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 45,
         "Y": 53,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 46,
         "Y": 53,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 47,
         "Y": 53,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 48,
@@ -27221,27 +27221,27 @@
       {
         "X": 43,
         "Y": 54,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 44,
         "Y": 54,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 45,
         "Y": 54,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 46,
         "Y": 54,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 47,
         "Y": 54,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 48,
@@ -29121,17 +29121,17 @@
       {
         "X": 23,
         "Y": 58,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 24,
         "Y": 58,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 25,
         "Y": 58,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 26,
@@ -29401,17 +29401,17 @@
       {
         "X": 79,
         "Y": 58,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 80,
         "Y": 58,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 81,
         "Y": 58,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 82,
@@ -29621,17 +29621,17 @@
       {
         "X": 23,
         "Y": 59,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 24,
         "Y": 59,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 25,
         "Y": 59,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 26,
@@ -29901,17 +29901,17 @@
       {
         "X": 79,
         "Y": 59,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 80,
         "Y": 59,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 81,
         "Y": 59,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 82,
@@ -30121,17 +30121,17 @@
       {
         "X": 23,
         "Y": 60,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 24,
         "Y": 60,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 25,
         "Y": 60,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 26,
@@ -30401,17 +30401,17 @@
       {
         "X": 79,
         "Y": 60,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 80,
         "Y": 60,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 81,
         "Y": 60,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 82,
@@ -33751,17 +33751,17 @@
       {
         "X": 49,
         "Y": 67,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 50,
         "Y": 67,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 51,
         "Y": 67,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 52,
@@ -34251,17 +34251,17 @@
       {
         "X": 49,
         "Y": 68,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 50,
         "Y": 68,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 51,
         "Y": 68,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 52,
@@ -34751,17 +34751,17 @@
       {
         "X": 49,
         "Y": 69,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 50,
         "Y": 69,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 51,
         "Y": 69,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 52,
@@ -36081,17 +36081,17 @@
       {
         "X": 15,
         "Y": 72,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 16,
         "Y": 72,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 17,
         "Y": 72,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 18,
@@ -36581,17 +36581,17 @@
       {
         "X": 15,
         "Y": 73,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 16,
         "Y": 73,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 17,
         "Y": 73,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 18,
@@ -37081,17 +37081,17 @@
       {
         "X": 15,
         "Y": 74,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 16,
         "Y": 74,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 17,
         "Y": 74,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 18,
@@ -40351,27 +40351,27 @@
       {
         "X": 69,
         "Y": 80,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 70,
         "Y": 80,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 71,
         "Y": 80,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 72,
         "Y": 80,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 73,
         "Y": 80,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 74,
@@ -40851,27 +40851,27 @@
       {
         "X": 69,
         "Y": 81,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 70,
         "Y": 81,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 71,
         "Y": 81,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 72,
         "Y": 81,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 73,
         "Y": 81,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 74,
@@ -41351,27 +41351,27 @@
       {
         "X": 69,
         "Y": 82,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 70,
         "Y": 82,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 71,
         "Y": 82,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 72,
         "Y": 82,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 73,
         "Y": 82,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 74,
@@ -41851,27 +41851,27 @@
       {
         "X": 69,
         "Y": 83,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 70,
         "Y": 83,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 71,
         "Y": 83,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 72,
         "Y": 83,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 73,
         "Y": 83,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 74,
@@ -42351,27 +42351,27 @@
       {
         "X": 69,
         "Y": 84,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 70,
         "Y": 84,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 71,
         "Y": 84,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 72,
         "Y": 84,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 73,
         "Y": 84,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 74,
@@ -45181,17 +45181,17 @@
       {
         "X": 35,
         "Y": 90,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 36,
         "Y": 90,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 37,
         "Y": 90,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 38,
@@ -45681,17 +45681,17 @@
       {
         "X": 35,
         "Y": 91,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 36,
         "Y": 91,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 37,
         "Y": 91,
-        "Type": "Forest"
+        "Type": "City"
       },
       {
         "X": 38,
@@ -46181,17 +46181,17 @@
       {
         "X": 35,
         "Y": 92,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 36,
         "Y": 92,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 37,
         "Y": 92,
-        "Type": "Sand"
+        "Type": "City"
       },
       {
         "X": 38,
