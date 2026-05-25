@@ -47,7 +47,6 @@ INSERT INTO TREASURE_TEMPLATE (X, Y, MIN_GOLD, MAX_GOLD) VALUES
 
 /* ==============================
    ЗБІР СКАРБІВ ДЛЯ АДМІНІСТРАТОРА
-   (Всі скарби окрім останнього з ID=10 зібрані для швидкого тесту перемоги)
    ============================== */
 
 INSERT INTO PLAYER_COLLECTED_TREASURE (PLAYER_ID, TREASURE_TEMPLATE_ID) VALUES

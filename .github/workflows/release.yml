@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p jpackage-input
-          cp target/rpgadminmenu-1.0-SNAPSHOT.jar jpackage-input/
+          cp target/ostriv-1.0-SNAPSHOT.jar jpackage-input/
 
       - name: Extract version from tag
         id: version
@@ -49,11 +49,11 @@ jobs:
         run: |
           jpackage `
             --type msi `
-            --name "RPG Admin Menu" `
+            --name "Ostriv" `
             --app-version "${{ steps.version.outputs.VERSION }}" `
             --vendor "Minden" `
             --input jpackage-input/ `
-            --main-jar rpgadminmenu-1.0-SNAPSHOT.jar `
+            --main-jar ostriv-1.0-SNAPSHOT.jar `
             --icon packaging/icon.ico `
             --dest dist/ `
             --win-dir-chooser `
@@ -65,11 +65,11 @@ jobs:
         run: |
           jpackage \
             --type deb \
-            --name "rpg-admin-menu" \
+            --name "Ostriv" \
             --app-version "${{ steps.version.outputs.VERSION }}" \
             --vendor "Minden" \
             --input jpackage-input/ \
-            --main-jar rpgadminmenu-1.0-SNAPSHOT.jar \
+            --main-jar ostriv-1.0-SNAPSHOT.jar \
             --dest dist/ \
             --linux-shortcut
 
@@ -96,10 +96,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "RPG Admin Menu Release ${{ github.ref_name }}"
+          name: "Ostriv Release ${{ github.ref_name }}"
           body: |
             ## Release Changes for ${{ github.ref_name }}
-            Official production deployment files for the RPG Admin Menu.
+            Official production deployment files for Ostriv.
             
             ## Download Installers:
             | Operating System | Installer File |
