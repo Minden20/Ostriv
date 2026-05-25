@@ -3,6 +3,7 @@ package com.minden.ui.controller;
 import java.util.List;
 
 import com.minden.config.ServiceFactory;
+import com.minden.entity.ActionLog;
 import com.minden.entity.MapTile;
 import com.minden.service.MapService;
 import com.minden.service.PathFinder;
@@ -62,6 +63,24 @@ public class MapController {
                 }
             });
 
+            var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                Integer playerId = currentUser.getId();
+                try {
+                    var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
+                    List<ActionLog> logs = actionLogRepo.findByPlayerId(playerId);
+                    if (logs != null) {
+                        for (var log : logs) {
+                            if (log.getToX() != null && log.getToY() != null) {
+                                updateFogOfWar(log.getToX(), log.getToY());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Помилка завантаження історії туману війни з логів: " + e.getMessage());
+                }
+            }
+
             // Малюємо карту
             drawMap();
 
@@ -96,7 +115,7 @@ public class MapController {
     private void drawMap() {
         GraphicsContext gc = mapCanvas.getGraphicsContext2D();
 
-        gc.setFill(Color.web("#0f0f17"));
+        gc.setFill(Color.web("#18110b"));
         gc.fillRect(0, 0, mapCanvas.getWidth(), mapCanvas.getHeight());
 
         var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
@@ -154,7 +173,7 @@ public class MapController {
 
                 gc.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-                gc.setStroke(Color.web("#313244", isVisibleNow ? 0.35 : 0.15));
+                gc.setStroke(Color.web("#5e4531", isVisibleNow ? 0.35 : 0.15));
                 gc.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             }
         }
@@ -197,7 +216,7 @@ public class MapController {
         }
 
         if (hasPlayer) {
-            gc.setFill(Color.web("#f38ba8")); // Beautiful pastel pink/red
+            gc.setFill(Color.web("#c63d2f")); // Cozy crimson wax seal / campfire red
             double padding = 2.0;
             double size = TILE_SIZE - padding * 2;
             gc.fillOval(
@@ -206,7 +225,7 @@ public class MapController {
                     size,
                     size
             );
-            gc.setStroke(Color.WHITE);
+            gc.setStroke(Color.web("#dfaf64")); // Golden outline
             gc.setLineWidth(1.5);
             gc.strokeOval(
                     px * TILE_SIZE + padding,
@@ -445,13 +464,13 @@ public class MapController {
 
         switch (terrainType) {
             case "Water":
-                return Color.web("#89b4fa"); // Синій (Water)
+                return Color.web("#4b779a"); // Глибокий річковий синій (Water)
             case "Forest":
-                return Color.web("#a6e3a1"); // Зелений (Forest)
+                return Color.web("#4b6d4c"); // Густий лісовий зелений (Forest)
             case "Sand":
-                return Color.web("#f9e2af"); // Жовтуватий (Sand)
+                return Color.web("#ebd8b0"); // Теплий піщаний / паперовий (Sand)
             case "City":
-                return Color.web("#fab387"); // Теплий помаранчевий (City)
+                return Color.web("#c87a53"); // Затишний теракотовий (City)
             default:
                 return Color.GRAY; // Невідомий тип
         }
@@ -489,47 +508,47 @@ public class MapController {
         }
 
         StackPane backdrop = new StackPane();
-        backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.85); -fx-alignment: center;");
+        backdrop.setStyle("-fx-background-color: rgba(26, 18, 12, 0.85); -fx-alignment: center;");
 
         VBox dialogBox = new VBox(20);
-        dialogBox.setStyle("-fx-background-color: #1e1e2e; "
-                + "-fx-border-color: #cba6f7; "
+        dialogBox.setStyle("-fx-background-color: #faf6ec; "
+                + "-fx-border-color: #a67c52; "
                 + "-fx-border-width: 2px; "
                 + "-fx-border-radius: 12px; "
                 + "-fx-background-radius: 12px; "
                 + "-fx-padding: 30px; "
-                + "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 8);");
+                + "-fx-effect: dropshadow(three-pass-box, rgba(27,20,14,0.4), 15, 0, 0, 8);");
         dialogBox.setMaxSize(480, 350);
         dialogBox.setAlignment(Pos.CENTER);
 
         Label titleLabel = new Label("⛺ Вибір місця для ночівлі");
-        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #cba6f7;");
+        titleLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #8c3b2b;");
 
         Label descLabel = new Label(isInCity
                 ? "Ви перебуваєте в безпечних стінах міста. Де ви бажаєте заночувати?"
                 : "Навколо лише дика природа та небезпеки. Ви можете розбити табір тут безкоштовно, але це ризиковано.");
         descLabel.setWrapText(true);
-        descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #cdd6f4; -fx-text-alignment: center;");
+        descLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 14px; -fx-text-fill: #3d2612; -fx-text-alignment: center;");
 
         VBox buttonsBox = new VBox(12);
         buttonsBox.setAlignment(Pos.CENTER);
 
         Button wildRestBtn = new Button(isInCity ? "Спати на вулиці міста (Безкоштовно, небезпечно)" : "Розбити табір (Безкоштовно, небезпечно)");
-        wildRestBtn.setStyle("-fx-background-color: #f38ba8; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;");
+        wildRestBtn.setStyle("-fx-background-color: #c66347; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;");
         wildRestBtn.setOnAction(e -> {
             mapRootPane.getChildren().remove(backdrop);
             processRest(false); // false = небезпечний відпочинок
         });
 
-        wildRestBtn.setOnMouseEntered(e -> wildRestBtn.setStyle("-fx-background-color: #e64553; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
-        wildRestBtn.setOnMouseExited(e -> wildRestBtn.setStyle("-fx-background-color: #f38ba8; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
+        wildRestBtn.setOnMouseEntered(e -> wildRestBtn.setStyle("-fx-background-color: #d9785c; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
+        wildRestBtn.setOnMouseExited(e -> wildRestBtn.setStyle("-fx-background-color: #c66347; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
 
         buttonsBox.getChildren().add(wildRestBtn);
 
         if (isInCity) {
             int tavernCost = 15;
             Button tavernRestBtn = new Button("Орендувати кімнату в Таверні (💰 " + tavernCost + " Золота, безпечно)");
-            tavernRestBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;");
+            tavernRestBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;");
 
             tavernRestBtn.setOnAction(e -> {
                 var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
@@ -539,18 +558,18 @@ public class MapController {
                     processRest(true); // true = безпечний відпочинок
                 } else {
                     descLabel.setText("❌ У вас недостатньо золота для кімнати в таверні!");
-                    descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #f38ba8; -fx-text-alignment: center;");
+                    descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #b84f3d; -fx-text-alignment: center;");
                 }
             });
 
-            tavernRestBtn.setOnMouseEntered(e -> tavernRestBtn.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
-            tavernRestBtn.setOnMouseExited(e -> tavernRestBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand; -fx-pref-width: 420px;"));
+            tavernRestBtn.setOnMouseEntered(e -> tavernRestBtn.setStyle("-fx-background-color: #57825e; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
+            tavernRestBtn.setOnMouseExited(e -> tavernRestBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
 
             buttonsBox.getChildren().add(tavernRestBtn);
         }
 
         Button cancelBtn = new Button("Назад");
-        cancelBtn.setStyle("-fx-background-color: #313244; -fx-text-fill: #cdd6f4; -fx-font-size: 13px; -fx-padding: 8px 16px; -fx-background-radius: 6px; -fx-cursor: hand;");
+        cancelBtn.setStyle("-fx-background-color: #e8dfcd; -fx-text-fill: #3d2612; -fx-font-family: 'Georgia'; -fx-font-size: 13px; -fx-padding: 8px 16px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;");
         cancelBtn.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
 
         dialogBox.getChildren().addAll(titleLabel, descLabel, buttonsBox, cancelBtn);
@@ -649,37 +668,37 @@ public class MapController {
         }
 
         StackPane backdrop = new StackPane();
-        backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.85); -fx-alignment: center;");
+        backdrop.setStyle("-fx-background-color: rgba(26, 18, 12, 0.85); -fx-alignment: center;");
 
         VBox dialogBox = new VBox(20);
-        dialogBox.setStyle("-fx-background-color: #1e1e2e; -fx-border-color: #eba0ac; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 30px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 8);");
+        dialogBox.setStyle("-fx-background-color: #faf6ec; -fx-border-color: #a67c52; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 30px; -fx-effect: dropshadow(three-pass-box, rgba(27,20,14,0.4), 15, 0, 0, 8);");
         dialogBox.setMaxSize(450, 320);
         dialogBox.setAlignment(Pos.CENTER);
 
         Label titleLabel = new Label("🔥 Подія: " + title);
-        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #eba0ac;");
+        titleLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #8c3b2b;");
 
         Label descLabel = new Label(description);
         descLabel.setWrapText(true);
-        descLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #cdd6f4; -fx-alignment: center; -fx-text-alignment: center;");
+        descLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-text-fill: #3d2612; -fx-alignment: center; -fx-text-alignment: center;");
 
         HBox statsBox = new HBox(25);
         statsBox.setAlignment(Pos.CENTER);
 
         Label energyDiff = new Label("⚡ +" + energyRestored + " Енергії");
-        energyDiff.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #89b4fa;");
+        energyDiff.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #4b779a;");
 
         Label goldDiff = new Label(goldLost > 0 ? "💰 -" + goldLost + " Золота" : "💰 Без втрат");
-        goldDiff.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: " + (goldLost > 0 ? "#f38ba8;" : "#a6e3a1;"));
+        goldDiff.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: " + (goldLost > 0 ? "#b84f3d;" : "#4b7252;"));
 
         statsBox.getChildren().addAll(energyDiff, goldDiff);
 
         Button closeButton = new Button("Продовжити подорож");
-        closeButton.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;");
+        closeButton.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;");
         closeButton.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
 
-        closeButton.setOnMouseEntered(e -> closeButton.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;"));
-        closeButton.setOnMouseExited(e -> closeButton.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 8px; -fx-cursor: hand;"));
+        closeButton.setOnMouseEntered(e -> closeButton.setStyle("-fx-background-color: #57825e; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
+        closeButton.setOnMouseExited(e -> closeButton.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
 
         dialogBox.getChildren().addAll(titleLabel, descLabel, statsBox, closeButton);
         backdrop.getChildren().add(dialogBox);
@@ -693,16 +712,16 @@ public class MapController {
         }
 
         StackPane backdrop = new StackPane();
-        backdrop.setStyle("-fx-background-color: rgba(17, 17, 27, 0.9); -fx-alignment: center;");
+        backdrop.setStyle("-fx-background-color: rgba(26, 18, 12, 0.9); -fx-alignment: center;");
 
         VBox victoryBox = new VBox(25);
-        victoryBox.setStyle("-fx-background-color: #1e1e2e; "
-                + "-fx-border-color: #a6e3a1; "
+        victoryBox.setStyle("-fx-background-color: #faf6ec; "
+                + "-fx-border-color: #c5a059; "
                 + "-fx-border-width: 3px; "
                 + "-fx-border-radius: 16px; "
                 + "-fx-background-radius: 16px; "
                 + "-fx-padding: 40px; "
-                + "-fx-effect: dropshadow(three-pass-box, rgba(166,227,161,0.3), 20, 0, 0, 0);");
+                + "-fx-effect: dropshadow(three-pass-box, rgba(140,94,56,0.3), 20, 0, 0, 0);");
         victoryBox.setMaxSize(500, 380);
         victoryBox.setAlignment(Pos.CENTER);
 
@@ -710,7 +729,7 @@ public class MapController {
         trophyLabel.setStyle("-fx-font-size: 64px;");
 
         Label titleLabel = new Label("ВЕЛИКА ПЕРЕМОГА!");
-        titleLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #a6e3a1;");
+        titleLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #8c3b2b;");
 
         var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
         String victoryText = String.format(
@@ -722,18 +741,18 @@ public class MapController {
 
         Label descLabel = new Label(victoryText);
         descLabel.setWrapText(true);
-        descLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #cdd6f4; -fx-text-alignment: center; -fx-line-spacing: 5px;");
+        descLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 16px; -fx-text-fill: #3d2612; -fx-text-alignment: center; -fx-line-spacing: 5px;");
 
         Button exitBtn = new Button("Повернутися в меню");
-        exitBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 8px; -fx-cursor: hand;");
+        exitBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;");
         exitBtn.setOnAction(e -> {
             mapRootPane.getChildren().remove(backdrop);
             com.minden.ui.SessionContext.getInstance().logout();
             com.minden.ui.JavaFxApp.setRoot("login");
         });
 
-        exitBtn.setOnMouseEntered(ev -> exitBtn.setStyle("-fx-background-color: #94e2d5; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 8px; -fx-cursor: hand;"));
-        exitBtn.setOnMouseExited(ev -> exitBtn.setStyle("-fx-background-color: #a6e3a1; -fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 8px; -fx-cursor: hand;"));
+        exitBtn.setOnMouseEntered(ev -> exitBtn.setStyle("-fx-background-color: #57825e; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
+        exitBtn.setOnMouseExited(ev -> exitBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
 
         victoryBox.getChildren().addAll(trophyLabel, titleLabel, descLabel, exitBtn);
         backdrop.getChildren().add(victoryBox);
