@@ -41,37 +41,23 @@ jobs:
       - name: Extract version from tag
         id: version
         shell: bash
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        run: |
+          # Отримуємо чисту версію (напр. 1.0.0)
+          RAW_VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$RAW_VERSION" >> $GITHUB_OUTPUT
+          # Окремо робимо безпечну версію для Linux (напр. 1.0.0-1)
+          echo "LINUX_VERSION=${RAW_VERSION}-1" >> $GITHUB_OUTPUT
 
       - name: Package Installer (Windows MSI)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          jpackage `
-            --type msi `
-            --name "Ostriv" `
-            --app-version "${{ steps.version.outputs.VERSION }}" `
-            --vendor "Minden" `
-            --input jpackage-input/ `
-            --main-jar ostriv-1.0-SNAPSHOT.jar `
-            --icon packaging/icon.ico `
-            --dest dist/ `
-            --win-dir-chooser `
-            --win-menu `
-            --win-shortcut
+          jpackage --type msi --name "Ostriv" --app-version "${{ steps.version.outputs.VERSION }}" --vendor "Minden" --input jpackage-input/ --main-jar ostriv-1.0-SNAPSHOT.jar --icon packaging/icon.ico --dest dist/ --win-dir-chooser --win-menu --win-shortcut
 
       - name: Package Installer (Linux DEB)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          jpackage \
-            --type deb \
-            --name "Ostriv" \
-            --app-version "${{ steps.version.outputs.VERSION }}" \
-            --vendor "Minden" \
-            --input jpackage-input/ \
-            --main-jar ostriv-1.0-SNAPSHOT.jar \
-            --dest dist/ \
-            --linux-shortcut
+          jpackage --type deb --name "ostriv" --app-version "${{ steps.version.outputs.LINUX_VERSION }}" --vendor "Minden" --input jpackage-input/ --main-jar ostriv-1.0-SNAPSHOT.jar --dest dist/ --linux-shortcut
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
@@ -97,6 +83,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Ostriv Release ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
           body: |
             ## Release Changes for ${{ github.ref_name }}
             Official production deployment files for Ostriv.
@@ -106,6 +93,8 @@ jobs:
             |---|---|
             | Windows 10 / 11 | `*.msi` |
             | Ubuntu / Debian | `*.deb` |
-          files: installers/**
+          files: |
+            installers/*.msi
+            installers/*.deb
           draft: false
           prerelease: false
