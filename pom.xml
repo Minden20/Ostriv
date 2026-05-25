@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.minden</groupId>
-    <artifactId>adminbalancesystem</artifactId>
+    <artifactId>ostriv</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -162,7 +162,7 @@
                                     </excludes>
                                 </filter>
                             </filters>
-                            <outputFile>target/rpgadminmenu-1.0-SNAPSHOT.jar</outputFile>
+                            <outputFile>target/ostriv-1.0-SNAPSHOT.jar</outputFile>
                         </configuration>
                     </execution>
                 </executions>
