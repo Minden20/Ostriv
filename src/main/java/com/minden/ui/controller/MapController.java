@@ -17,6 +17,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -35,6 +36,41 @@ public class MapController {
     private MapService mapService;
     private Timeline movementTimeline;
 
+    /**
+     * Map renderer for canvas drawing.
+     */
+    private com.minden.ui.renderer.MapRenderer mapRenderer;
+
+    /**
+     * Current visual X coordinate of the player.
+     */
+    private double visualX = -1.0;
+
+    /**
+     * Current visual Y coordinate of the player.
+     */
+    private double visualY = -1.0;
+
+    /**
+     * Current facing direction of the player.
+     */
+    private String facingDirection = "DOWN";
+
+    /**
+     * Animation timer for the game loop.
+     */
+    private javafx.animation.AnimationTimer gameLoop;
+
+    /**
+     * Memory cache for the map tiles grid.
+     */
+    private MapTile[][] cachedGrid;
+
+    /**
+     * Memory cache for the active treasures list.
+     */
+    private List<com.minden.dto.TreasureDto> cachedTreasures;
+
     // Розмір однієї клітинки на екрані (у пікселях)
     private static final int TILE_SIZE = 50;
     private static final int MAP_WIDTH = 100;
@@ -42,10 +78,48 @@ public class MapController {
 
     private final boolean[][] exploredTiles = new boolean[MAP_WIDTH][MAP_HEIGHT];
 
+    /**
+     * Loads the map tiles and treasures from the database into the memory cache.
+     */
+    private void loadCache() {
+        try {
+            var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                return;
+            }
+            Integer playerId = currentUser.getId();
+
+            List<MapTile> tiles = mapService.getMapForPlayer(playerId);
+            if (tiles != null) {
+                cachedGrid = new MapTile[MAP_WIDTH][MAP_HEIGHT];
+                for (MapTile tile : tiles) {
+                    cachedGrid[tile.getX()][tile.getY()] = tile;
+                }
+            }
+
+            var treasureService = ServiceFactory.getInstance().getTreasureService();
+            cachedTreasures = treasureService.findAllForPlayer(playerId);
+        } catch (Exception e) {
+            System.err.println("Failed to load map cache: " + e.getMessage());
+        }
+    }
+
     @FXML
     public void initialize() {
         try {
+            mapRenderer = new com.minden.ui.renderer.MapRenderer();
             mapService = ServiceFactory.getInstance().getMapService();
+
+            loadCache();
+
+            gameLoop = new javafx.animation.AnimationTimer() {
+                @Override
+                public void handle(long now) {
+                    updateVisualPosition();
+                    drawMap();
+                }
+            };
+            gameLoop.start();
 
             // Встановлюємо розмір полотна
             mapCanvas.setWidth(MAP_WIDTH * TILE_SIZE);
@@ -87,8 +161,11 @@ public class MapController {
             // Блокуємо скрол мишкою/тачпадом
             scrollPane.addEventFilter(javafx.scene.input.ScrollEvent.ANY, event -> event.consume());
 
-            // Фокусуємо камеру на гравцеві після завантаження
-            javafx.application.Platform.runLater(this::centerCameraOnPlayer);
+            /** Фокусуємо камеру на гравцеві та малюємо видиму область після завершення ініціалізації */
+            javafx.application.Platform.runLater(() -> {
+                centerCameraOnPlayer();
+                drawMap();
+            });
 
         } catch (Exception e) {
             System.err.println("Помилка ініціалізації карти: " + e.getMessage());
@@ -112,137 +189,101 @@ public class MapController {
         }
     }
 
+    /**
+     * Відображає карту на полотні з обчисленням видимої області.
+     */
     private void drawMap() {
         GraphicsContext gc = mapCanvas.getGraphicsContext2D();
 
-        gc.setFill(Color.web("#18110b"));
-        gc.fillRect(0, 0, mapCanvas.getWidth(), mapCanvas.getHeight());
-
         var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
-        Integer playerId = currentUser != null ? currentUser.getId() : null;
-        List<MapTile> tiles = mapService.getMapForPlayer(playerId);
-
-        if (tiles == null || tiles.isEmpty()) {
-            gc.setFill(Color.WHITE);
-            gc.fillText("Карта не знайдена в БД. Перевірте консоль на помилки імпорту.", 50, 50);
+        if (currentUser == null || cachedGrid == null) {
             return;
         }
 
-        MapTile[][] grid = new MapTile[MAP_WIDTH][MAP_HEIGHT];
-        for (MapTile tile : tiles) {
-            grid[tile.getX()][tile.getY()] = tile;
-        }
-
-        int px = 0;
-        int py = 0;
         boolean hasPlayer = false;
+        int targetX = 0;
+        int targetY = 0;
 
-        if (currentUser != null && currentUser.getX() != null && currentUser.getY() != null) {
-            px = currentUser.getX();
-            py = currentUser.getY();
+        if (currentUser.getX() != null && currentUser.getY() != null) {
+            targetX = currentUser.getX();
+            targetY = currentUser.getY();
             hasPlayer = true;
-            updateFogOfWar(px, py);
+            updateFogOfWar(targetX, targetY);
         }
 
-        gc.setLineWidth(0.5);
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            for (int y = 0; y < MAP_HEIGHT; y++) {
-                if (!exploredTiles[x][y]) {
-                    continue; // Закриті туманом тайли навіть не намагаємося рендерити!
-                }
-
-                MapTile tile = grid[x][y];
-                if (tile == null) {
-                    continue;
-                }
-
-                boolean isVisibleNow = false;
-                if (hasPlayer) {
-                    int dx = x - px;
-                    int dy = y - py;
-                    isVisibleNow = (dx * dx + dy * dy <= 16);
-                }
-
-                Color terrainColor = getColorForTerrain(tile.getTerrainType());
-
-                if (isVisibleNow) {
-                    gc.setFill(terrainColor);
-                } else {
-                    gc.setFill(terrainColor.deriveColor(0, 1.0, 0.40, 1.0));
-                }
-
-                gc.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-                gc.setStroke(Color.web("#5e4531", isVisibleNow ? 0.35 : 0.15));
-                gc.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-            }
+        /** Обчислюємо розміри видимої області ScrollPane */
+        double viewportWidth = scrollPane.getViewportBounds().getWidth();
+        double viewportHeight = scrollPane.getViewportBounds().getHeight();
+        if (viewportWidth <= 0) {
+            viewportWidth = scrollPane.getWidth();
         }
+        if (viewportHeight <= 0) {
+            viewportHeight = scrollPane.getHeight();
+        }
+        if (viewportWidth <= 0) {
+            viewportWidth = 800.0;
+        }
+        if (viewportHeight <= 0) {
+            viewportHeight = 600.0;
+        }
+
+        double contentWidth = mapCanvas.getWidth();
+        double contentHeight = mapCanvas.getHeight();
+
+        /** Обчислюємо видиму область безпосередньо з поточних значень прокрутки ScrollPane */
+        double hValue = scrollPane.getHvalue();
+        double vValue = scrollPane.getVvalue();
+
+        double viewX = 0.0;
+        if (contentWidth > viewportWidth) {
+            viewX = hValue * (contentWidth - viewportWidth);
+        }
+        double viewY = 0.0;
+        if (contentHeight > viewportHeight) {
+            viewY = vValue * (contentHeight - viewportHeight);
+        }
+
+        /** Обмежуємо видиму область у межах полотна карти */
+        viewX = Math.max(0.0, Math.min(contentWidth - viewportWidth, viewX));
+        viewY = Math.max(0.0, Math.min(contentHeight - viewportHeight, viewY));
 
         try {
-            var treasureService = ServiceFactory.getInstance().getTreasureService();
-            List<com.minden.dto.TreasureDto> treasures = treasureService.findAllForPlayer(playerId);
-
-            for (var treasure : treasures) {
-                if (!treasure.getIsCollected()) {
-                    int tx = treasure.getX();
-                    int ty = treasure.getY();
-
-                    if (hasPlayer) {
-                        int dx = tx - px;
-                        int dy = ty - py;
-                        if (dx * dx + dy * dy <= 16) {
-                            gc.setFill(Color.web("#8B4513"));
-                            double padding = 6.0;
-                            gc.fillOval(
-                                    tx * TILE_SIZE + padding,
-                                    ty * TILE_SIZE + padding,
-                                    TILE_SIZE - padding * 2,
-                                    TILE_SIZE - padding * 2
-                            );
-                            gc.setStroke(Color.web("#1e1e2e"));
-                            gc.setLineWidth(1.0);
-                            gc.strokeOval(
-                                    tx * TILE_SIZE + padding,
-                                    ty * TILE_SIZE + padding,
-                                    TILE_SIZE - padding * 2,
-                                    TILE_SIZE - padding * 2
-                            );
-                        }
-                    }
-                }
-            }
+            mapRenderer.drawMap(
+                    gc,
+                    mapCanvas.getWidth(),
+                    mapCanvas.getHeight(),
+                    viewX,
+                    viewY,
+                    viewportWidth,
+                    viewportHeight,
+                    cachedGrid,
+                    exploredTiles,
+                    cachedTreasures,
+                    hasPlayer,
+                    targetX,
+                    targetY,
+                    visualX,
+                    visualY,
+                    facingDirection
+            );
         } catch (Exception e) {
-            System.err.println("Помилка завантаження скарбів: " + e.getMessage());
-        }
-
-        if (hasPlayer) {
-            gc.setFill(Color.web("#c63d2f")); // Cozy crimson wax seal / campfire red
-            double padding = 2.0;
-            double size = TILE_SIZE - padding * 2;
-            gc.fillOval(
-                    px * TILE_SIZE + padding,
-                    py * TILE_SIZE + padding,
-                    size,
-                    size
-            );
-            gc.setStroke(Color.web("#dfaf64")); // Golden outline
-            gc.setLineWidth(1.5);
-            gc.strokeOval(
-                    px * TILE_SIZE + padding,
-                    py * TILE_SIZE + padding,
-                    size,
-                    size
-            );
+            System.err.println("Помилка при рендерингу карти: " + e.getMessage());
         }
     }
 
+    /**
+     * Переміщує гравця до вказаних логічних координат.
+     * Розрахунок шляху виконується у фоновому потоці.
+     *
+     * @param targetX цільова координата X
+     * @param targetY цільова координата Y
+     */
     private void movePlayerTo(int targetX, int targetY) {
         var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
         if (currentUser == null || currentUser.getX() == null || currentUser.getY() == null) {
             return;
         }
 
-        // Перевіряємо, чи є енергія для початку руху
         if (currentUser.getEnergy() == null || currentUser.getEnergy() <= 0) {
             System.out.println("Рух неможливий: недостатньо енергії!");
             return;
@@ -255,17 +296,14 @@ public class MapController {
         }
 
         try {
-            // Зупиняємо попереднє переміщення, якщо воно триває
             if (movementTimeline != null) {
                 movementTimeline.stop();
             }
 
-            // Отримуємо тайли карти
-            List<MapTile> tiles = mapService.getMapForPlayer(currentUser.getId());
-            MapTile[][] grid = new MapTile[MAP_WIDTH][MAP_HEIGHT];
-            for (MapTile tile : tiles) {
-                grid[tile.getX()][tile.getY()] = tile;
+            if (cachedGrid == null) {
+                loadCache();
             }
+            MapTile[][] grid = cachedGrid;
 
             MapTile startTile = grid[startX][startY];
             MapTile endTile = grid[targetX][targetY];
@@ -282,135 +320,207 @@ public class MapController {
                 }
             }
 
-            // Обчислюємо шлях за допомогою PathFinder
-            PathFinder pathFinder = new PathFinder();
-            List<String> pathCoords = pathFinder.findPath(grid, startTile, endTile);
+            new Thread(() -> {
+                try {
+                    PathFinder pathFinder = new PathFinder();
+                    List<String> pathCoords = pathFinder.findPath(grid, startTile, endTile);
 
-            if (pathCoords != null && !pathCoords.isEmpty()) {
-                movementTimeline = new Timeline();
-
-                // pathCoords містить початкову точку на індексі 0, тому починаємо з 1
-                for (int i = 1; i < pathCoords.size(); i++) {
-                    final int stepIndex = i;
-                    String coord = pathCoords.get(i);
-                    String[] parts = coord.split(",");
-                    int nextX = Integer.parseInt(parts[0]);
-                    int nextY = Integer.parseInt(parts[1]);
-
-                    KeyFrame keyFrame = new KeyFrame(
-                            Duration.millis(150 * stepIndex),
-                            event -> {
-                                // Визначаємо вартість переміщення на наступний тайл
-                                MapTile nextTile = grid[nextX][nextY];
-                                int stepCost = nextTile != null ? nextTile.getMovementCost() : 1;
-
-                                // Перевіряємо енергію перед кожним кроком з урахуванням вартості тайлу
-                                if (currentUser.getEnergy() == null || currentUser.getEnergy() < stepCost) {
-                                    System.out.println("Рух зупинено: недостатньо енергії для кроку на "
-                                            + (nextTile != null ? nextTile.getTerrainType() : "тайл") + " (потрібно " + stepCost + ")!");
-                                    if (movementTimeline != null) {
-                                        movementTimeline.stop();
-                                    }
-                                    return;
-                                }
-
-                                // Зменшуємо енергію на вартість переміщення тайлу
-                                currentUser.setEnergy(currentUser.getEnergy() - stepCost);
-
-                                int currentX = currentUser.getX();
-                                int currentY = currentUser.getY();
-
-                                // Оновлюємо координати гравця
-                                currentUser.setX(nextX);
-                                currentUser.setY(nextY);
-
-                                // Перемальовуємо карту
-                                drawMap();
-
-                                // Фокусуємо камеру на гравцеві
-                                centerCameraOnPlayer();
-
-                                // Оновлюємо позицію в базі даних та додаємо лог руху
-                                try {
-                                    var playerRepo = ServiceFactory.getInstance().getPlayerRepository();
-                                    playerRepo.findById(currentUser.getId()).ifPresent(player -> {
-                                        player.setX(nextX);
-                                        player.setY(nextY);
-                                        player.setEnergy(currentUser.getEnergy());
-                                        playerRepo.update(player);
-                                    });
-
-                                    // Оновлюємо відображення характеристик на головній панелі
-                                    if (com.minden.ui.controller.MainController.getInstance() != null) {
-                                        com.minden.ui.controller.MainController.getInstance().updatePlayerStats();
-                                    }
-
-                                    var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
-                                    actionLogRepo.save(com.minden.entity.ActionLog.builder()
-                                            .playerId(currentUser.getId())
-                                            .actionType("MOVE")
-                                            .fromX(currentX)
-                                            .fromY(currentY)
-                                            .toX(nextX)
-                                            .toY(nextY)
-                                            .isValid(true)
-                                            .createdAt(java.time.LocalDateTime.now())
-                                            .build());
-
-                                    // Перевіряємо збирання скарбів на цій клітинці
-                                    var treasureService = ServiceFactory.getInstance().getTreasureService();
-                                    List<com.minden.dto.TreasureDto> treasures = treasureService.findAllForPlayer(currentUser.getId());
-                                    for (var treasure : treasures) {
-                                        if (!treasure.getIsCollected() && treasure.getX() == nextX && treasure.getY() == nextY) {
-                                            treasureService.collectTreasure(currentUser.getId(), treasure.getId());
-
-                                            int minGold = treasure.getMinGold() != null ? treasure.getMinGold() : 0;
-                                            int maxGold = treasure.getMaxGold() != null ? treasure.getMaxGold() : 0;
-                                            int rewardedGold = minGold + (int) (Math.random() * ((maxGold - minGold) + 1));
-
-                                            currentUser.setGold(currentUser.getGold() + rewardedGold);
-
-                                            playerRepo.findById(currentUser.getId()).ifPresent(player -> {
-                                                player.setGold(currentUser.getGold());
-                                                playerRepo.update(player);
-                                            });
-
-                                            // Миттєво оновлюємо нове золото на екрані
-                                            if (com.minden.ui.controller.MainController.getInstance() != null) {
-                                                com.minden.ui.controller.MainController.getInstance().updatePlayerStats();
-                                            }
-
-                                            actionLogRepo.save(com.minden.entity.ActionLog.builder()
-                                                    .playerId(currentUser.getId())
-                                                    .actionType("COLLECT_TREASURE")
-                                                    .fromX(nextX)
-                                                    .fromY(nextY)
-                                                    .toX(nextX)
-                                                    .toY(nextY)
-                                                    .isValid(true)
-                                                    .createdAt(java.time.LocalDateTime.now())
-                                                    .build());
-
-                                            if (treasureService.checkVictoryCondition(currentUser.getId())) {
-                                                javafx.application.Platform.runLater(() -> showVictoryOverlay());
-                                            }
-                                        }
-                                    }
-
-                                } catch (Exception ex) {
-                                    System.err.println("Помилка при оновленні переміщення: " + ex.getMessage());
-                                    ex.printStackTrace();
-                                }
+                    if (pathCoords != null && !pathCoords.isEmpty()) {
+                        javafx.application.Platform.runLater(() -> {
+                            /** Запускаємо ігровий цикл для плавної анімації руху */
+                            if (gameLoop != null) {
+                                gameLoop.start();
                             }
-                    );
-                    movementTimeline.getKeyFrames().add(keyFrame);
+                            startMovementTimeline(pathCoords, grid);
+                        });
+                    }
+                } catch (Exception e) {
+                    System.err.println("Помилка розрахунку шляху: " + e.getMessage());
                 }
-                movementTimeline.play();
-            }
+            }).start();
 
         } catch (Exception e) {
-            System.err.println("Помилка розрахунку шляху: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Помилка ініціалізації розрахунку шляху: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Запускає таймлайн переміщення гравця по знайденому шляху.
+     * Всі важкі операції з базою даних перенесено у фоновий потік.
+     *
+     * @param pathCoords список координат знайденого шляху
+     * @param grid сітка тайлів карти
+     */
+    private void startMovementTimeline(List<String> pathCoords, MapTile[][] grid) {
+        var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
+
+        movementTimeline = new Timeline();
+        for (int i = 1; i < pathCoords.size(); i++) {
+            final int stepIndex = i;
+            String coord = pathCoords.get(i);
+            String[] parts = coord.split(",");
+            int nextX = Integer.parseInt(parts[0]);
+            int nextY = Integer.parseInt(parts[1]);
+
+            KeyFrame keyFrame = new KeyFrame(
+                    Duration.millis(150 * stepIndex),
+                    event -> {
+                        MapTile nextTile = grid[nextX][nextY];
+                        int stepCost = nextTile != null ? nextTile.getMovementCost() : 1;
+
+                        if (currentUser.getEnergy() == null || currentUser.getEnergy() < stepCost) {
+                            System.out.println("Рух зупинено: недостатньо енергії!");
+                            if (movementTimeline != null) {
+                                movementTimeline.stop();
+                            }
+                            return;
+                        }
+
+                        currentUser.setEnergy(currentUser.getEnergy() - stepCost);
+
+                        int currentX = currentUser.getX();
+                        int currentY = currentUser.getY();
+
+                        currentUser.setX(nextX);
+                        currentUser.setY(nextY);
+
+                        drawMap();
+                        centerCameraOnPlayer();
+
+                        new Thread(() -> {
+                            try {
+                                var playerRepo = ServiceFactory.getInstance().getPlayerRepository();
+                                playerRepo.findById(currentUser.getId()).ifPresent(player -> {
+                                    player.setX(nextX);
+                                    player.setY(nextY);
+                                    player.setEnergy(currentUser.getEnergy());
+                                    playerRepo.update(player);
+                                });
+
+                                if (com.minden.ui.controller.MainController.getInstance() != null) {
+                                    javafx.application.Platform.runLater(() -> com.minden.ui.controller.MainController.getInstance().updatePlayerStats());
+                                }
+
+                                var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
+                                actionLogRepo.save(com.minden.entity.ActionLog.builder()
+                                        .playerId(currentUser.getId())
+                                        .actionType("MOVE")
+                                        .fromX(currentX)
+                                        .fromY(currentY)
+                                        .toX(nextX)
+                                        .toY(nextY)
+                                        .isValid(true)
+                                        .createdAt(java.time.LocalDateTime.now())
+                                        .build());
+
+                                var treasureService = ServiceFactory.getInstance().getTreasureService();
+                                if (cachedTreasures == null) {
+                                    cachedTreasures = treasureService.findAllForPlayer(currentUser.getId());
+                                }
+                                for (var treasure : cachedTreasures) {
+                                    if (!treasure.getIsCollected() && treasure.getX() == nextX && treasure.getY() == nextY) {
+                                        treasureService.collectTreasure(currentUser.getId(), treasure.getId());
+                                        treasure.setIsCollected(true);
+
+                                        int minGold = treasure.getMinGold() != null ? treasure.getMinGold() : 0;
+                                        int maxGold = treasure.getMaxGold() != null ? treasure.getMaxGold() : 0;
+                                        int rewardedGold = minGold + (int) (Math.random() * ((maxGold - minGold) + 1));
+
+                                        currentUser.setGold(currentUser.getGold() + rewardedGold);
+
+                                        playerRepo.findById(currentUser.getId()).ifPresent(player -> {
+                                            player.setGold(currentUser.getGold());
+                                            playerRepo.update(player);
+                                        });
+
+                                        if (com.minden.ui.controller.MainController.getInstance() != null) {
+                                            javafx.application.Platform.runLater(() -> com.minden.ui.controller.MainController.getInstance().updatePlayerStats());
+                                        }
+
+                                        actionLogRepo.save(com.minden.entity.ActionLog.builder()
+                                                .playerId(currentUser.getId())
+                                                .actionType("COLLECT_TREASURE")
+                                                .fromX(nextX)
+                                                .fromY(nextY)
+                                                .toX(nextX)
+                                                .toY(nextY)
+                                                .isValid(true)
+                                                .createdAt(java.time.LocalDateTime.now())
+                                                .build());
+
+                                        if (treasureService.checkVictoryCondition(currentUser.getId())) {
+                                            javafx.application.Platform.runLater(() -> showVictoryOverlay());
+                                        }
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                System.err.println("Помилка фонового збереження ходу: " + ex.getMessage());
+                            }
+                        }).start();
+                    }
+            );
+            movementTimeline.getKeyFrames().add(keyFrame);
+        }
+        movementTimeline.play();
+    }
+
+    /**
+     * Updates the player's smooth visual position and determines movement
+     * direction.
+     */
+    private void updateVisualPosition() {
+        var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+        if (currentUser == null || currentUser.getX() == null || currentUser.getY() == null) {
+            return;
+        }
+
+        double targetX = currentUser.getX();
+        double targetY = currentUser.getY();
+
+        if (visualX == -1.0 || visualY == -1.0) {
+            visualX = targetX;
+            visualY = targetY;
+        }
+
+        double dx = targetX - visualX;
+        double dy = targetY - visualY;
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 0.01) {
+            double speed = 0.12;
+            visualX += dx * speed;
+            visualY += dy * speed;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) {
+                    facingDirection = "RIGHT";
+                } else {
+                    facingDirection = "LEFT";
+                }
+            } else {
+                if (dy > 0) {
+                    facingDirection = "DOWN";
+                } else {
+                    facingDirection = "UP";
+                }
+            }
+            /** Оновлюємо камеру синхронно для запобігання дьоргання */
+            centerCameraOnPlayer();
+        } else {
+            visualX = targetX;
+            visualY = targetY;
+            /** Перевіряємо, чи активний таймлайн переміщення в даний момент */
+            boolean isTimelineRunning = (movementTimeline != null && 
+                    movementTimeline.getStatus() == javafx.animation.Animation.Status.RUNNING);
+            /** Зупиняємо ігровий цикл, лише якщо таймлайн завершився і персонаж стоїть на місці */
+            if (!isTimelineRunning) {
+                if (gameLoop != null) {
+                    gameLoop.stop();
+                }
+            }
         }
     }
 
@@ -420,8 +530,11 @@ public class MapController {
             return;
         }
 
-        double playerPixelX = currentUser.getX() * TILE_SIZE + TILE_SIZE / 2.0;
-        double playerPixelY = currentUser.getY() * TILE_SIZE + TILE_SIZE / 2.0;
+        double px = visualX != -1.0 ? visualX : currentUser.getX();
+        double py = visualY != -1.0 ? visualY : currentUser.getY();
+
+        double playerPixelX = px * TILE_SIZE + TILE_SIZE / 2.0;
+        double playerPixelY = py * TILE_SIZE + TILE_SIZE / 2.0;
 
         double contentWidth = mapCanvas.getWidth();
         double contentHeight = mapCanvas.getHeight();
@@ -457,24 +570,7 @@ public class MapController {
         }
     }
 
-    private Color getColorForTerrain(String terrainType) {
-        if (terrainType == null) {
-            return Color.BLACK;
-        }
 
-        switch (terrainType) {
-            case "Water":
-                return Color.web("#4b779a"); // Глибокий річковий синій (Water)
-            case "Forest":
-                return Color.web("#4b6d4c"); // Густий лісовий зелений (Forest)
-            case "Sand":
-                return Color.web("#ebd8b0"); // Теплий піщаний / паперовий (Sand)
-            case "City":
-                return Color.web("#c87a53"); // Затишний теракотовий (City)
-            default:
-                return Color.GRAY; // Невідомий тип
-        }
-    }
 
     @FXML
     private void handleRest() {
@@ -507,74 +603,23 @@ public class MapController {
             return;
         }
 
-        StackPane backdrop = new StackPane();
-        backdrop.setStyle("-fx-background-color: rgba(26, 18, 12, 0.85); -fx-alignment: center;");
+        var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
+        int playerGold = currentUser.getGold() != null ? currentUser.getGold() : 0;
 
-        VBox dialogBox = new VBox(20);
-        dialogBox.setStyle("-fx-background-color: #faf6ec; "
-                + "-fx-border-color: #a67c52; "
-                + "-fx-border-width: 2px; "
-                + "-fx-border-radius: 12px; "
-                + "-fx-background-radius: 12px; "
-                + "-fx-padding: 30px; "
-                + "-fx-effect: dropshadow(three-pass-box, rgba(27,20,14,0.4), 15, 0, 0, 8);");
-        dialogBox.setMaxSize(480, 350);
-        dialogBox.setAlignment(Pos.CENTER);
+        StackPane overlay = com.minden.ui.dialog.MapDialogFactory.createRestChoiceOverlay(
+                isInCity,
+                playerGold,
+                isSafeRest -> {
+                    mapRootPane.getChildren().remove(mapRootPane.getChildren().size() - 1);
+                    if (isSafeRest) {
+                        currentUser.setGold(playerGold - 15);
+                    }
+                    processRest(isSafeRest);
+                },
+                () -> mapRootPane.getChildren().remove(mapRootPane.getChildren().size() - 1)
+        );
 
-        Label titleLabel = new Label("⛺ Вибір місця для ночівлі");
-        titleLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #8c3b2b;");
-
-        Label descLabel = new Label(isInCity
-                ? "Ви перебуваєте в безпечних стінах міста. Де ви бажаєте заночувати?"
-                : "Навколо лише дика природа та небезпеки. Ви можете розбити табір тут безкоштовно, але це ризиковано.");
-        descLabel.setWrapText(true);
-        descLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 14px; -fx-text-fill: #3d2612; -fx-text-alignment: center;");
-
-        VBox buttonsBox = new VBox(12);
-        buttonsBox.setAlignment(Pos.CENTER);
-
-        Button wildRestBtn = new Button(isInCity ? "Спати на вулиці міста (Безкоштовно, небезпечно)" : "Розбити табір (Безкоштовно, небезпечно)");
-        wildRestBtn.setStyle("-fx-background-color: #c66347; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;");
-        wildRestBtn.setOnAction(e -> {
-            mapRootPane.getChildren().remove(backdrop);
-            processRest(false); // false = небезпечний відпочинок
-        });
-
-        wildRestBtn.setOnMouseEntered(e -> wildRestBtn.setStyle("-fx-background-color: #d9785c; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
-        wildRestBtn.setOnMouseExited(e -> wildRestBtn.setStyle("-fx-background-color: #c66347; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
-
-        buttonsBox.getChildren().add(wildRestBtn);
-
-        if (isInCity) {
-            int tavernCost = 15;
-            Button tavernRestBtn = new Button("Орендувати кімнату в Таверні (💰 " + tavernCost + " Золота, безпечно)");
-            tavernRestBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;");
-
-            tavernRestBtn.setOnAction(e -> {
-                var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
-                if (currentUser.getGold() >= tavernCost) {
-                    mapRootPane.getChildren().remove(backdrop);
-                    currentUser.setGold(currentUser.getGold() - tavernCost);
-                    processRest(true); // true = безпечний відпочинок
-                } else {
-                    descLabel.setText("❌ У вас недостатньо золота для кімнати в таверні!");
-                    descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #b84f3d; -fx-text-alignment: center;");
-                }
-            });
-
-            tavernRestBtn.setOnMouseEntered(e -> tavernRestBtn.setStyle("-fx-background-color: #57825e; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
-            tavernRestBtn.setOnMouseExited(e -> tavernRestBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand; -fx-pref-width: 420px;"));
-
-            buttonsBox.getChildren().add(tavernRestBtn);
-        }
-
-        Button cancelBtn = new Button("Назад");
-        cancelBtn.setStyle("-fx-background-color: #e8dfcd; -fx-text-fill: #3d2612; -fx-font-family: 'Georgia'; -fx-font-size: 13px; -fx-padding: 8px 16px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;");
-        cancelBtn.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
-
-        dialogBox.getChildren().addAll(titleLabel, descLabel, buttonsBox, cancelBtn);
-        backdrop.getChildren().add(dialogBox);
-        mapRootPane.getChildren().add(backdrop);
+        mapRootPane.getChildren().add(overlay);
     }
 
     private void processRest(boolean isSafeRest) {
@@ -637,7 +682,6 @@ public class MapController {
                 }
             }
 
-            // Записуємо лог дії в ACTION_LOG
             var actionLogRepo = ServiceFactory.getInstance().getActionLogRepository();
             actionLogRepo.save(com.minden.entity.ActionLog.builder()
                     .playerId(currentUser.getId())
@@ -667,43 +711,15 @@ public class MapController {
             return;
         }
 
-        StackPane backdrop = new StackPane();
-        backdrop.setStyle("-fx-background-color: rgba(26, 18, 12, 0.85); -fx-alignment: center;");
+        StackPane overlay = com.minden.ui.dialog.MapDialogFactory.createEventOverlay(
+                title,
+                description,
+                goldLost,
+                energyRestored,
+                () -> mapRootPane.getChildren().remove(mapRootPane.getChildren().size() - 1)
+        );
 
-        VBox dialogBox = new VBox(20);
-        dialogBox.setStyle("-fx-background-color: #faf6ec; -fx-border-color: #a67c52; -fx-border-width: 2px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 30px; -fx-effect: dropshadow(three-pass-box, rgba(27,20,14,0.4), 15, 0, 0, 8);");
-        dialogBox.setMaxSize(450, 320);
-        dialogBox.setAlignment(Pos.CENTER);
-
-        Label titleLabel = new Label("🔥 Подія: " + title);
-        titleLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #8c3b2b;");
-
-        Label descLabel = new Label(description);
-        descLabel.setWrapText(true);
-        descLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-text-fill: #3d2612; -fx-alignment: center; -fx-text-alignment: center;");
-
-        HBox statsBox = new HBox(25);
-        statsBox.setAlignment(Pos.CENTER);
-
-        Label energyDiff = new Label("⚡ +" + energyRestored + " Енергії");
-        energyDiff.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #4b779a;");
-
-        Label goldDiff = new Label(goldLost > 0 ? "💰 -" + goldLost + " Золота" : "💰 Без втрат");
-        goldDiff.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: " + (goldLost > 0 ? "#b84f3d;" : "#4b7252;"));
-
-        statsBox.getChildren().addAll(energyDiff, goldDiff);
-
-        Button closeButton = new Button("Продовжити подорож");
-        closeButton.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;");
-        closeButton.setOnAction(e -> mapRootPane.getChildren().remove(backdrop));
-
-        closeButton.setOnMouseEntered(e -> closeButton.setStyle("-fx-background-color: #57825e; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
-        closeButton.setOnMouseExited(e -> closeButton.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
-
-        dialogBox.getChildren().addAll(titleLabel, descLabel, statsBox, closeButton);
-        backdrop.getChildren().add(dialogBox);
-
-        mapRootPane.getChildren().add(backdrop);
+        mapRootPane.getChildren().add(overlay);
     }
 
     private void showVictoryOverlay() {
@@ -711,51 +727,18 @@ public class MapController {
             return;
         }
 
-        StackPane backdrop = new StackPane();
-        backdrop.setStyle("-fx-background-color: rgba(26, 18, 12, 0.9); -fx-alignment: center;");
-
-        VBox victoryBox = new VBox(25);
-        victoryBox.setStyle("-fx-background-color: #faf6ec; "
-                + "-fx-border-color: #c5a059; "
-                + "-fx-border-width: 3px; "
-                + "-fx-border-radius: 16px; "
-                + "-fx-background-radius: 16px; "
-                + "-fx-padding: 40px; "
-                + "-fx-effect: dropshadow(three-pass-box, rgba(140,94,56,0.3), 20, 0, 0, 0);");
-        victoryBox.setMaxSize(500, 380);
-        victoryBox.setAlignment(Pos.CENTER);
-
-        Label trophyLabel = new Label("🏆");
-        trophyLabel.setStyle("-fx-font-size: 64px;");
-
-        Label titleLabel = new Label("ВЕЛИКА ПЕРЕМОГА!");
-        titleLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #8c3b2b;");
-
         var currentUser = com.minden.ui.SessionContext.getInstance().getCurrentUser();
-        String victoryText = String.format(
-                "Вітаємо, %s!\nВи знайшли всі приховані скарби на острові!\n"
-                + "Ви витратили: %d днів (ходів).\n"
-                + "Ваше фінальне золото: 💰 %d",
-                currentUser.getUsername(), currentUser.getCurrentDay(), currentUser.getGold()
+        StackPane overlay = com.minden.ui.dialog.MapDialogFactory.createVictoryOverlay(
+                currentUser.getUsername(),
+                currentUser.getCurrentDay(),
+                currentUser.getGold(),
+                () -> {
+                    mapRootPane.getChildren().remove(mapRootPane.getChildren().size() - 1);
+                    com.minden.ui.SessionContext.getInstance().logout();
+                    com.minden.ui.JavaFxApp.setRoot("login");
+                }
         );
 
-        Label descLabel = new Label(victoryText);
-        descLabel.setWrapText(true);
-        descLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 16px; -fx-text-fill: #3d2612; -fx-text-alignment: center; -fx-line-spacing: 5px;");
-
-        Button exitBtn = new Button("Повернутися в меню");
-        exitBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;");
-        exitBtn.setOnAction(e -> {
-            mapRootPane.getChildren().remove(backdrop);
-            com.minden.ui.SessionContext.getInstance().logout();
-            com.minden.ui.JavaFxApp.setRoot("login");
-        });
-
-        exitBtn.setOnMouseEntered(ev -> exitBtn.setStyle("-fx-background-color: #57825e; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
-        exitBtn.setOnMouseExited(ev -> exitBtn.setStyle("-fx-background-color: #4b7252; -fx-text-fill: #ffffff; -fx-font-family: 'Georgia'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 12px 25px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-cursor: hand;"));
-
-        victoryBox.getChildren().addAll(trophyLabel, titleLabel, descLabel, exitBtn);
-        backdrop.getChildren().add(victoryBox);
-        mapRootPane.getChildren().add(backdrop);
+        mapRootPane.getChildren().add(overlay);
     }
 }
