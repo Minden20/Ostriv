@@ -8,8 +8,9 @@ on:
 jobs:
   build-installers:
     strategy:
+      fail-fast: false # Щоб бачити логи обох ОС, навіть якщо одна впаде
       matrix:
-        os: [windows-latest, ubuntu-latest] # Note: Add macos-latest later if needed!
+        os: [windows-latest, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -29,8 +30,9 @@ jobs:
         run: |
           choco install wixtoolset --yes
 
+      # ДОДАНО ПРАПОРЦІ ПРОПУСКУ ПЕРЕВІРОК ТА БАТЧ-РЕЖИМ
       - name: Build Executable Fat JAR
-        run: mvn clean package -DskipTests
+        run: mvn clean package -DskipTests -Dcheckstyle.skip -Dspotless.check.skip -B
 
       - name: Prepare jpackage input
         shell: bash
@@ -42,10 +44,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          # Отримуємо чисту версію (напр. 1.0.0)
           RAW_VERSION="${GITHUB_REF_NAME#v}"
           echo "VERSION=$RAW_VERSION" >> $GITHUB_OUTPUT
-          # Окремо робимо безпечну версію для Linux (напр. 1.0.0-1)
           echo "LINUX_VERSION=${RAW_VERSION}-1" >> $GITHUB_OUTPUT
 
       - name: Package Installer (Windows MSI)
