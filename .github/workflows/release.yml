@@ -8,7 +8,7 @@ on:
 jobs:
   build-installers:
     strategy:
-      fail-fast: false # Щоб бачити логи обох ОС, навіть якщо одна впаде
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
 
@@ -18,7 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ОНОВЛЕНО ДО JDK 23 згідно з вашим pom.xml
       - name: Set up JDK 23
         uses: actions/setup-java@v4
         with:
@@ -31,9 +30,10 @@ jobs:
         run: |
           choco install wixtoolset --yes
 
-      # Додано пропуск перевірок стилю, щоб нічого випадково не заблокувало реліз
+      # ВИПРАВЛЕНО: Використовуємо універсальний bash-виклик з чітким розділенням аргументів
       - name: Build Executable Fat JAR
-        run: mvn clean package -DskipTests -Dcheckstyle.skip -Dspotless.check.skip -B
+        shell: bash
+        run: mvn clean package -DskipTests=true -Dcheckstyle.skip=true -Dspotless.check.skip=true -B
 
       - name: Prepare jpackage input
         shell: bash
