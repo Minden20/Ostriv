@@ -53,6 +53,11 @@ public class MapRenderer {
     private Image floorsTilesSheet;
 
     /**
+     * Chest sprite sheet.
+     */
+    private Image chestSheet;
+
+    /**
      * Water tile atlas.
      */
     private Image waterTilesSheet;
@@ -70,13 +75,15 @@ public class MapRenderer {
             walkSideSheet = new Image(getClass().getResourceAsStream("/image/walk/Walk_Side-Sheet.png"));
             floorsTilesSheet = new Image(getClass().getResourceAsStream("/image/tile_texture/Floors_Tiles.png"));
             waterTilesSheet = new Image(getClass().getResourceAsStream("/image/tile_texture/Water_tiles.png"));
+            chestSheet = new Image(getClass().getResourceAsStream("/image/chest/chests_1px_padding.png"));
         } catch (Exception e) {
             System.err.println("Failed to load graphic assets: " + e.getMessage());
         }
     }
 
     /**
-     * Відображає карту на наданому графічному контексті з використанням відсікання невидимих елементів.
+     * Відображає карту на наданому графічному контексті з використанням
+     * відсікання невидимих елементів.
      *
      * @param gc цільовий графічний контекст
      * @param canvasWidth ширина полотна
@@ -100,7 +107,9 @@ public class MapRenderer {
             MapTile[][] grid, boolean[][] exploredTiles, List<TreasureDto> treasures,
             boolean hasPlayer, int targetX, int targetY, double vpx, double vpy, String facingDirection) {
 
-        /** Очищаємо лише видиму прямокутну область для підвищення продуктивності */
+        /**
+         * Очищаємо лише видиму прямокутну область для підвищення продуктивності
+         */
         gc.setFill(Color.web("#18110b"));
         gc.fillRect(viewX, viewY, viewportWidth, viewportHeight);
 
@@ -111,7 +120,9 @@ public class MapRenderer {
         int width = grid.length;
         int height = grid[0].length;
 
-        /** Обчислюємо межі видимих тайлів із безпечним відступом у 2 клітинки */
+        /**
+         * Обчислюємо межі видимих тайлів із безпечним відступом у 2 клітинки
+         */
         int minX = Math.max(0, (int) (viewX / TILE_SIZE) - 2);
         int maxX = Math.min(width - 1, (int) ((viewX + viewportWidth) / TILE_SIZE) + 2);
         int minY = Math.max(0, (int) (viewY / TILE_SIZE) - 2);
@@ -198,7 +209,9 @@ public class MapRenderer {
                     int tx = treasure.getX();
                     int ty = treasure.getY();
 
-                    /** Відсікаємо скарби, які знаходяться поза межами видимості */
+                    /**
+                     * Відсікаємо скарби, які знаходяться поза межами видимості
+                     */
                     if (tx < minX || tx > maxX || ty < minY || ty > maxY) {
                         continue;
                     }
@@ -207,22 +220,30 @@ public class MapRenderer {
                         double dx = tx - vpx;
                         double dy = ty - vpy;
                         if (dx * dx + dy * dy <= 16.0) {
-                            gc.setFill(Color.web("#8B4513"));
-                            double padding = 6.0;
-                            gc.fillOval(
-                                    tx * TILE_SIZE + padding,
-                                    ty * TILE_SIZE + padding,
-                                    TILE_SIZE - padding * 2.0,
-                                    TILE_SIZE - padding * 2.0
-                            );
-                            gc.setStroke(Color.web("#1e1e2e"));
-                            gc.setLineWidth(1.0);
-                            gc.strokeOval(
-                                    tx * TILE_SIZE + padding,
-                                    ty * TILE_SIZE + padding,
-                                    TILE_SIZE - padding * 2.0,
-                                    TILE_SIZE - padding * 2.0
-                            );
+                            if (chestSheet != null && chestSheet.getWidth() > 0) {
+                                gc.drawImage(
+                                        chestSheet,
+                                        1, 1, 16, 16,
+                                        tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE
+                                );
+                            } else {
+                                gc.setFill(Color.web("#8B4513"));
+                                double padding = 6.0;
+                                gc.fillOval(
+                                        tx * TILE_SIZE + padding,
+                                        ty * TILE_SIZE + padding,
+                                        TILE_SIZE - padding * 2.0,
+                                        TILE_SIZE - padding * 2.0
+                                );
+                                gc.setStroke(Color.web("#1e1e2e"));
+                                gc.setLineWidth(1.0);
+                                gc.strokeOval(
+                                        tx * TILE_SIZE + padding,
+                                        ty * TILE_SIZE + padding,
+                                        TILE_SIZE - padding * 2.0,
+                                        TILE_SIZE - padding * 2.0
+                                );
+                            }
                         }
                     }
                 }
